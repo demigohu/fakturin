@@ -1,0 +1,17 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Outer border with square corners -->
+  <rect x="4" y="4" width="56" height="56" stroke="#000f1d" stroke-width="4" stroke-linejoin="miter" />
+
+  <!-- Invoice Sheet with folded top-right corner -->
+  <path d="M 14 14 L 34 14 L 42 22 L 42 44 L 14 44 Z" stroke="#000f1d" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
+  
+  <!-- Folded corner fold line -->
+  <path d="M 34 14 L 34 22 L 42 22" stroke="#000f1d" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
+  
+  <!-- Horizontal ruled lines in invoice -->
+  <line x1="20" y1="28" x2="36" y2="28" stroke="#000f1d" stroke-width="4" stroke-linecap="round" />
+  <line x1="20" y1="36" x2="28" y2="36" stroke="#000f1d" stroke-width="4" stroke-linecap="round" />
+
+  <!-- Blue square block in the bottom-right corner, fitting perfectly against the border -->
+  <rect x="40" y="40" width="16" height="16" fill="#4da2ff" stroke="#000f1d" stroke-width="4" stroke-linejoin="miter" />
+</svg>

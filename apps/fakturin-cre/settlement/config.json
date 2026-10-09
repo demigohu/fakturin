@@ -1,0 +1,7 @@
+{
+  "schedule": "0 */10 * * * *",
+  "invoiceId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "consumerAddress": "0x344504538b2381b8559beA6CB81C4Db6E52bBE9b",
+  "chainName": "ethereum-testnet-sepolia-arbitrum-1",
+  "gasLimit": "800000"
+}

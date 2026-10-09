@@ -1,0 +1,181 @@
+.toggle {
+  display: flex;
+  border: var(--border);
+}
+
+.toggle button {
+  height: 34px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.toggle button + button {
+  border-left: var(--border);
+}
+
+.toggle button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.checks {
+  list-style: none;
+}
+
+.check {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px 14px;
+  padding: 16px 20px;
+}
+
+.check + .check {
+  border-top: var(--border);
+}
+
+.check > :last-child:not(.checkText) {
+  grid-column: 2;
+  justify-self: start;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: var(--border);
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.mark[data-ok="true"] {
+  background: var(--cat-green);
+}
+
+.checkText {
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+}
+
+/* ---------- Vault cards (v2) ---------- */
+.vaults,
+.positions {
+  list-style: none;
+}
+
+.vault,
+.position {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+
+.vault + .vault,
+.position + .position {
+  border-top: var(--border);
+}
+
+.vaultHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.buyer {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.ret {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  text-align: right;
+}
+
+.ret strong {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.ret span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.fundRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.amount {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 180px;
+  height: 44px;
+  border: var(--border);
+  background: var(--surface);
+}
+
+.amount:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.rp {
+  padding: 0 10px;
+  border-right: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.amount input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  outline: none;
+}
+
+.positionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.posActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vaults:has(> li) + .fallback,
+.positions:has(> li) + .fallback {
+  display: none;
+}

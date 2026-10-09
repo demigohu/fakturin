@@ -1,0 +1,7 @@
+{
+  "schedule": "0 * * * * *",
+  "keeperAddress": "0xE1D08AE3c821a67430F10052E6B598D3A7B7D96D",
+  "chainName": "ethereum-testnet-sepolia-arbitrum-1",
+  "maxPerRun": 10,
+  "gasLimit": "3000000"
+}

@@ -1,159 +1,60 @@
-# Turborepo starter
+# Fakturin
 
-This Turborepo starter is maintained by the Turborepo core team.
+Pembiayaan faktur terkonfirmasi di **Arbitrum Sepolia** (ETH Jakarta 2026 — RWA). Monorepo Turborepo: kontrak Foundry + frontend Next.js.
 
-## Using this example
+## Yang nyata vs simulasi
 
-Run the following command:
+| Nyata (onchain) | Simulasi (UI / peran admin) |
+| ---------------- | --------------------------- |
+| Registry ID faktur & status | Rekening penampung rupiah |
+| Konfirmasi pembeli (attestation) | Cek e-Faktur / QR DJP |
+| ERC-721 token faktur | — |
+| Pasar & anti pembiayaan ganda | Whitelist lender = admin demo |
+| Pelunasan / gagal bayar (MockIDR) | Mitra = tombol oracle |
 
-```sh
-npx create-turbo@latest
+**MockIDR bukan uang nyata.**
+
+## Struktur
+
+- `apps/contracts-solidity` — Solidity 0.8 + Foundry + OpenZeppelin
+- `apps/web` — Next.js + viem + wagmi
+- `packages/abis` — ABI hasil `forge inspect`
+- `docs/PRD.md`, `docs/Spec&Pitch.md`
+
+## Development
+
+```bash
+npm install
+
+# Tes kontrak
+cd apps/contracts-solidity && forge test
+
+# Frontend (set .env.local dulu)
+npm run dev -- --filter=web
 ```
 
-## What's inside?
+## Deploy Arbitrum Sepolia
 
-This Turborepo includes the following packages/apps:
+1. Isi `PRIVATE_KEY` dan RPC di environment (lihat `.env.example`).
+2. `forge script script/Deploy.s.sol:Deploy --rpc-url $ARBITRUM_SEPOLIA_RPC_URL --broadcast`
+3. Verifikasi kontrak di [Arbiscan Sepolia](https://sepolia.arbiscan.io/) bila perlu.
+4. Salin alamat ke `apps/web/.env.local`:
+   - `NEXT_PUBLIC_MOCK_IDR_ADDRESS`
+   - `NEXT_PUBLIC_INVOICE_REGISTRY_ADDRESS`
+   - `NEXT_PUBLIC_INVOICE_MARKETPLACE_ADDRESS`
+   - `NEXT_PUBLIC_INVOICE_NFT_ADDRESS`
 
-### Apps and Packages
+Setelah deploy, deployer otomatis di-whitelist sebagai lender dan oracle demo. Tambah lender: `InvoiceMarketplace.setLender`.
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `@next/eslint-plugin-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+## Chainlink CRE (opsional, setelah simulasi)
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+Demo hackathon **tidak bergantung** pada CRE deployed. Oracle pelunasan = `/mitra` + `ORACLE_ROLE`.  
+Rencana: `cre workflow simulate --broadcast` di Arbitrum Sepolia dulu; `cre workflow deploy` hanya setelah deploy access.  
+Detail: [docs/chainlink-cre.md](docs/chainlink-cre.md).
 
-### Utilities
+## Parameter demo (konfigurasi admin)
 
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo build
-npm exec turbo build
-npm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-npm exec turbo build --filter=docs
-npm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-npm exec turbo dev
-npm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-npm exec turbo dev --filter=web
-npm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-npm exec turbo login
-npm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-npm exec turbo link
-npm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- Diskon 3% — harga token = 97% nominal
+- Pencairan ke penjual 80% nominal saat beli
+- Masa sanggah 60 detik
+- Limit penjual 200 juta MockIDR, pembeli 500 juta (outstanding belum lunas)

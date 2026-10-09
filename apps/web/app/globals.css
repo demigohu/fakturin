@@ -1,30 +1,79 @@
+/* Tokens from apps/web/DESIGN.md (Overflow Grid, adapted for Fakturin) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --surface: #f7f7f7;
+  --surface-raised: #ffffff;
+  --surface-warm: #f2eee4;
+  --surface-muted: #dfdfdf;
+  --ink: #000f1d;
+  --ink-raised: #31404e;
+  --text: #000f1d;
+  --text-muted: #61686d;
+  --text-subtle: #7c838a;
+  --on-ink: #f7f7f7;
+  --line: #bbbec0;
+  --outline: #000f1d;
+
+  --accent: #4da2ff;
+  --accent-bright: #00bfff;
+
+  --cat-yellow: #ffd731;
+  --cat-orange: #ff7a00;
+  --cat-green: #55db9c;
+  --cat-violet: #5c4ade;
+  --cat-lilac: #e9ccff;
+  --cat-cyan: #6de6f8;
+
+  --hl-lime: #beff4d;
+  --hl-peach: #f79f4d;
+  --hl-olive: #3e512f;
+  --hl-lavender: #dbcdeb;
+  --hl-mint: #4df766;
+
+  --font-sans: var(--font-geist-sans), Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --border: 2px solid var(--outline);
+  --hairline: 1px solid var(--line);
+  --ease: cubic-bezier(0.525, 0, 0, 1);
+  --dur: 0.525s;
+  --dur-fast: 0.25s;
+
+  --page-x: clamp(16px, 4vw, 56px);
+  --content: 1280px;
+  --nav-h: 68px;
+  --strip-h: 0px;
+
+  /* z-index scale: nav 20, mobile menu 30 */
+  --z-nav: 20;
+  --z-menu: 30;
+
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-}
+/* Light only, like the reference site (DESIGN.md section 8). */
 
 * {
   box-sizing: border-box;
-  padding: 0;
   margin: 0;
+  padding: 0;
+}
+
+/* clip (not hidden): hidden turns body into a scroll container and breaks position: sticky. */
+html,
+body {
+  max-width: 100vw;
+  overflow-x: clip;
+}
+
+body {
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -32,19 +81,122 @@ a {
   text-decoration: none;
 }
 
-.imgDark {
-  display: none;
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+a,
+button {
+  touch-action: manipulation;
+}
 
-  .imgLight {
-    display: none;
-  }
-  .imgDark {
-    display: unset;
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 500;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Anchored sections clear the sticky nav. */
+[id] {
+  scroll-margin-top: calc(var(--nav-h) + 8px);
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -64px;
+  z-index: 60;
+  padding: 10px 14px;
+  background: var(--accent);
+  color: var(--ink);
+  font-weight: 500;
+  border: var(--border);
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Graph-paper motif. Used at most once per page. */
+.graph-paper {
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--accent) 70%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--accent) 70%, transparent) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+
+/* Lenis smooth scroll (landing only). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

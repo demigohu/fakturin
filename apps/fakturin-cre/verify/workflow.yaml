@@ -1,0 +1,17 @@
+# Fakturin: Faktur Pajak verification (PRD v2, US-02).
+# Trigger: FakturRegistry.VerificationRequested -> PJAP lookup -> report to FakturVerifierReceiver.
+staging-settings:
+  user-workflow:
+    workflow-name: "fakturin-verify"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.json"
+    secrets-path: ""
+
+production-settings:
+  user-workflow:
+    workflow-name: "fakturin-verify"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.json"
+    secrets-path: ""

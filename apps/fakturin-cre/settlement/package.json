@@ -1,0 +1,13 @@
+{
+  "name": "fakturin-settlement-cre",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@chainlink/cre-sdk": "^1.23.0",
+    "viem": "^2.34.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

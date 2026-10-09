@@ -1,0 +1,574 @@
+/* ---------- Split CTA button ---------- */
+.btn {
+  display: inline-flex;
+  align-items: stretch;
+  min-height: 56px;
+  border: var(--border);
+  background: var(--surface-raised);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  text-align: left;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.45;
+}
+
+.btnLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  flex: 1;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.btnIcon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  flex: none;
+  border-left: var(--border);
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.btnIcon svg {
+  transition: transform var(--dur) var(--ease);
+}
+
+.btn:hover:not(:disabled) .btnIcon svg {
+  transform: translate(2px, -2px);
+}
+
+.primary .btnLabel {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.primary:hover:not(:disabled) .btnLabel {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.ghost .btnLabel {
+  background: transparent;
+}
+
+.ghost:hover:not(:disabled) .btnLabel {
+  background: var(--surface-warm);
+}
+
+.danger .btnIcon {
+  background: var(--cat-orange);
+}
+
+.plain .btnLabel {
+  justify-content: center;
+}
+
+.plain:hover:not(:disabled) .btnLabel {
+  background: var(--surface-warm);
+}
+
+.sm {
+  min-height: 44px;
+  font-size: 15px;
+}
+
+.sm .btnLabel {
+  padding: 0 14px;
+}
+
+.sm .btnIcon {
+  width: 44px;
+}
+
+.block {
+  display: flex;
+  width: 100%;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Status badge ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.tone-none {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+.tone-lilac {
+  background: var(--cat-lilac);
+}
+.tone-accent {
+  background: var(--accent);
+}
+.tone-yellow {
+  background: var(--cat-yellow);
+}
+.tone-cyan {
+  background: var(--cat-cyan);
+}
+.tone-green {
+  background: var(--cat-green);
+}
+.tone-settled {
+  background: var(--surface-raised);
+  color: var(--text);
+  border-color: var(--outline);
+}
+.tone-orange {
+  background: var(--cat-orange);
+}
+
+/* ---------- Status track ---------- */
+.track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border: var(--border);
+}
+
+.track4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.trackCell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 72px;
+  padding: 12px;
+  border-right: var(--border);
+  color: var(--text-subtle);
+  font-size: 14px;
+}
+
+.trackCell:not(.trackDone) {
+  background: var(--surface-raised);
+}
+
+.trackCell:last-child {
+  border-right: 0;
+}
+
+.trackCell strong {
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+
+.trackDone {
+  color: var(--ink);
+}
+
+.trackCurrent {
+  color: var(--ink);
+  box-shadow: inset 0 -4px 0 var(--ink);
+}
+
+.trackNote {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+@media (max-width: 720px) {
+  .track {
+    grid-template-columns: 1fr;
+  }
+  .trackCell {
+    min-height: 0;
+    border-right: 0;
+    border-bottom: var(--border);
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .trackCell:last-child {
+    border-bottom: 0;
+  }
+}
+
+/* ---------- Tag chip ---------- */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--outline);
+  background: var(--surface-raised);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.tagSim {
+  background: var(--cat-yellow);
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ---------- Panel ---------- */
+.panelWrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.panelWrap > .tag {
+  align-self: flex-start;
+  border-bottom: 0;
+}
+
+.panel {
+  border: var(--border);
+  background: var(--surface-raised);
+  min-width: 0;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding: 12px 20px;
+  border-bottom: var(--border);
+}
+
+.panelTitle {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.panelBody {
+  padding: 20px;
+  display: grid;
+  gap: 18px;
+}
+
+.flush {
+  padding: 0;
+  gap: 0;
+}
+
+/* ---------- Field ---------- */
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.input {
+  height: 48px;
+  width: 100%;
+  padding: 0 14px;
+  border: var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--cat-orange);
+}
+
+.inputMono {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.helper {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.fieldError {
+  justify-self: start;
+  padding: 3px 8px;
+  background: var(--cat-orange);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .fieldRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Notice ---------- */
+.notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: var(--border);
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.notice svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.notice a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.notice-info {
+  background: var(--surface-warm);
+  color: var(--text);
+}
+.notice-success {
+  background: var(--cat-green);
+}
+.notice-error {
+  background: var(--cat-orange);
+}
+.notice-pending {
+  background: var(--cat-lilac);
+}
+
+/* ---------- Stat ---------- */
+.stat {
+  display: grid;
+  gap: 6px;
+  padding: 16px 20px;
+  min-width: 0;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.statValue {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(22px, 2.4vw, 30px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+}
+
+.statGrid > * + * {
+  border-left: var(--border);
+}
+
+.statGrid[data-cols="1"] > * + * {
+  border-left: 0;
+  border-top: var(--border);
+}
+
+@media (max-width: 720px) {
+  .statGrid {
+    grid-template-columns: 1fr;
+  }
+  .statGrid > * + * {
+    border-left: 0;
+    border-top: var(--border);
+  }
+}
+
+/* ---------- Address ---------- */
+.addr {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+.iconBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+}
+
+.iconBtn:hover {
+  border-color: var(--outline);
+  color: var(--text);
+}
+
+/* ---------- Skeleton ---------- */
+.skeleton {
+  display: block;
+  height: 1em;
+  background: var(--surface-muted);
+  animation: pulse 1.4s var(--ease) infinite alternate;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.45;
+  }
+}
+
+/* ---------- Empty state ---------- */
+.empty {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  padding: 28px 20px;
+  background: var(--surface-warm);
+}
+
+.empty h3 {
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.empty p {
+  color: var(--text-muted);
+  max-width: 52ch;
+  line-height: 1.4;
+}
+
+/* ---------- Illustration slot ---------- */
+.slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: var(--ratio, 4 / 3);
+  overflow: hidden;
+}
+
+.slot img {
+  object-fit: contain;
+}
+
+.slotCaption {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 12px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  opacity: 0.7;
+}
+
+/* ---------- Key/value list ---------- */
+.kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 10px 20px;
+  font-size: 15px;
+}
+
+.kv dt {
+  color: var(--text-muted);
+}
+
+.kv dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Funding progress ---------- */
+.progress {
+  display: grid;
+  gap: 8px;
+}
+
+.progressBar {
+  position: relative;
+  height: 14px;
+  border: var(--border);
+  background: var(--surface-muted);
+}
+
+.progressFill {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform-origin: left center;
+  transition: transform var(--dur) var(--ease);
+}
+
+.progressMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.progressMeta strong {
+  color: var(--text);
+  font-weight: 500;
+}

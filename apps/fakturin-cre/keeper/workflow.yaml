@@ -1,0 +1,17 @@
+# Fakturin: close overdue vaults automatically (PRD v2, FR-12).
+# Trigger: cron -> FakturKeeper.closable() -> report to FakturKeeper.onReport (cancel or default).
+staging-settings:
+  user-workflow:
+    workflow-name: "fakturin-keeper"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.json"
+    secrets-path: ""
+
+production-settings:
+  user-workflow:
+    workflow-name: "fakturin-keeper"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.json"
+    secrets-path: ""
