@@ -7,3 +7,6 @@
 # Local anvil-fork configs (addresses differ per local deploy)
 config.local.json
 binary.wasm
+
+# CRE build artifacts
+.cre_build_tmp.js

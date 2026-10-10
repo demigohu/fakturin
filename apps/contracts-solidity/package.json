@@ -1,0 +1,9 @@
+{
+  "name": "contracts-solidity",
+  "private": true,
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "deploy:sepolia": "./scripts/deploy-and-verify.sh"
+  }
+}
