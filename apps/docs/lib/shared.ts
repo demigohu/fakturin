@@ -5,7 +5,7 @@ export const docsRoute = "/docs";
 export const docsContentRoute = "/llms.mdx/docs";
 
 /** The dApp itself (apps/web). */
-export const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+export const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://fakturin.xyz";
 
 export const gitConfig = {
   user: "demigohu",

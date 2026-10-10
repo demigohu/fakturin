@@ -4,6 +4,8 @@ import { EXPLORER, shortHex } from "../lib/invoice";
 import { ROLES } from "../lib/roles";
 import s from "./shell.module.css";
 
+const DOCS_URL = process.env.NEXT_PUBLIC_DOCS_URL ?? "https://docs.fakturin.xyz";
+
 const CONTRACTS: [string, string | undefined][] = [
   ["FakturRegistry", addresses.registry],
   ["FakturVaultFactory", addresses.factory],
@@ -36,6 +38,9 @@ export function Footer() {
               {r.label}
             </Link>
           ))}
+          <a href={DOCS_URL} target="_blank" rel="noreferrer">
+            Docs
+          </a>
         </div>
         <div className={s.footerCol}>
           <h3>Contracts</h3>
