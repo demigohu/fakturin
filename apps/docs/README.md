@@ -5,7 +5,7 @@ how pricing, identity, verification and vaults work, architecture and system des
 contract and API reference.
 
 [Fumadocs](https://fumadocs.dev) 16 · Next.js 16 · Tailwind 4 · Mermaid. Styled with the same Overflow Grid tokens
-as the app ([`DESIGN.md`](DESIGN.md)): paper and navy ink, Sui blue accent, Geist, square corners, light only.
+as the app ([`DESIGN.md`](DESIGN.md)): paper and navy ink, blue accent, Geist, square corners, light only.
 
 ## Contents
 

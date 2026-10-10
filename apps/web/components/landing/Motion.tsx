@@ -42,8 +42,9 @@ export function whenIntroReveal(cb: () => void): () => void {
 }
 
 /**
- * Landing choreography: a React port of the overflow.sui.io animation script
- * (DESIGN.md section 7). Behavior is declared in markup with data attributes.
+ * Landing choreography, written for Fakturin in React + GSAP. The motion style (timings, reveals)
+ * follows DESIGN.md section 7, adapted from the Sui Overflow 2026 site. Behavior is declared in
+ * markup with data attributes.
  */
 export function Motion({ children }: { children: ReactNode }) {
   const scope = useRef<HTMLDivElement>(null);
@@ -215,7 +216,7 @@ export function Motion({ children }: { children: ReactNode }) {
         );
       });
 
-      // Wiggle while in view (random drift, "sui-wiggle").
+      // Wiggle while in view (random drift, "house-wiggle").
       (q("[data-wiggle]") as HTMLElement[]).forEach((el) => {
         const amp = Number(el.dataset.wiggle || 5);
         const tl = gsap
@@ -224,7 +225,7 @@ export function Motion({ children }: { children: ReactNode }) {
             x: `random(${-amp}, ${amp})`,
             y: `random(${-amp}, ${amp})`,
             duration: gsap.utils.random(1.2, 2),
-            ease: "sui-wiggle",
+            ease: "house-wiggle",
           });
         ScrollTrigger.create({
           trigger: el,

@@ -102,5 +102,5 @@ lib/
   invoice.ts, token.ts     formatting, statuses, reject reasons, 2-decimal MockIDRX
 ```
 
-Design system: [`DESIGN.md`](DESIGN.md) (Overflow Grid: paper, navy ink, Sui blue, square corners).
+Design system: [`DESIGN.md`](DESIGN.md) (paper, navy ink, Fakturin blue, square corners; visual language adapted from the Sui Overflow 2026 site).
 Product spec: [`docs/PRD.md`](../../docs/PRD.md). End-to-end test guide: [`docs/TESTING.md`](../../docs/TESTING.md).

@@ -7,7 +7,7 @@ const MIN_SCALE = 0.85;
 
 /**
  * Renders a Mermaid diagram on the client, themed with the Overflow Grid tokens
- * (paper, navy ink, Sui blue, square corners). Shows the source until it has rendered.
+ * (paper, navy ink, Fakturin blue, square corners). Shows the source until it has rendered.
  */
 export function Mermaid({ chart, caption }: { chart: string; caption?: string }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");

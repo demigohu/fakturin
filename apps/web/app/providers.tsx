@@ -7,7 +7,7 @@ import { WagmiProvider } from "wagmi";
 import { appKitEnabled, networks, projectId, wagmiAdapter, wagmiConfig } from "../lib/wagmi";
 import { useState } from "react";
 
-// One AppKit instance for the app, themed to DESIGN.md (square, Sui blue, Geist).
+// One AppKit instance for the app, themed to DESIGN.md (square, Fakturin blue, Geist).
 if (appKitEnabled && wagmiAdapter) createAppKit({
   adapters: [wagmiAdapter],
   networks,

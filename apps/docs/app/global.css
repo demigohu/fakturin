@@ -4,7 +4,7 @@
 
 /*
  * Fakturin docs theme: the same Overflow Grid tokens as apps/web (see DESIGN.md).
- * Paper and navy ink, Sui blue as the single accent, Geist, square corners, light only.
+ * Paper and navy ink, Fakturin blue as the single accent, Geist, square corners, light only.
  */
 @theme {
   --color-fd-background: #f7f7f7;
@@ -87,7 +87,7 @@ h4 {
   color: var(--ink);
 }
 
-/* Active sidebar entry: the Sui-blue block used for the active nav in the app. */
+/* Active sidebar entry: the blue block used for the active nav in the app. */
 #nd-sidebar a[data-active="true"] {
   background: var(--accent);
   color: var(--ink);

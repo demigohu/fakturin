@@ -10,13 +10,13 @@ import { useGSAP } from "@gsap/react";
 
 let registered = false;
 
-/** Registers plugins and the Overflow defaults once (DESIGN.md section 7). */
+/** Registers plugins and the house motion defaults once (DESIGN.md section 7). */
 export function setupGsap() {
   if (registered || typeof window === "undefined") return;
   gsap.registerPlugin(ScrollTrigger, SplitText, CustomEase, Flip, ScrambleTextPlugin, useGSAP);
-  CustomEase.create("sui-sine", "0.525, 0, 0, 1");
-  CustomEase.create("sui-wiggle", "0.33, 0, 0.67, 1");
-  gsap.defaults({ ease: "sui-sine", duration: 0.525 });
+  CustomEase.create("house-ease", "0.525, 0, 0, 1");
+  CustomEase.create("house-wiggle", "0.33, 0, 0.67, 1");
+  gsap.defaults({ ease: "house-ease", duration: 0.525 });
   registered = true;
 }
 

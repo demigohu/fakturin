@@ -202,6 +202,12 @@ Everything in this repository was written for Ethereum Jakarta Hackathon 2026, s
 | [forge-std](https://github.com/foundry-rs/forge-std)                                 | Tests and scripts                                         | MIT / Apache-2.0             |
 | Next.js, wagmi, viem, Reown AppKit, Fumadocs, Mermaid                                | Frontend and docs                                         | see packages                 |
 
+**Design attribution.** The visual language of the app, docs and pitch video (color palette, graph-paper grid,
+square geometry, typography scale and motion timings) is adapted from the
+[Sui Overflow 2026](https://overflow.sui.io/) website and documented in [`apps/web/DESIGN.md`](apps/web/DESIGN.md).
+All UI and animation code was written for Fakturin; no code, fonts or image assets were copied. The logo and
+illustrations are our own work.
+
 ## Roadmap
 
 PJAP staging access → CRE on the Chainlink DON → licensed KYC/KYB issuer → IDRX on Arbitrum → indexer and
