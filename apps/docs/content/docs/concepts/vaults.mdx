@@ -1,0 +1,57 @@
+---
+title: Invoice vaults (ERC-4626)
+description: One all-or-nothing ERC-4626 vault per invoice. How deposits, the payout, repayment, default and withdrawals work.
+---
+
+Every verified invoice gets its own `FakturVault`, created by `FakturVaultFactory`. It is a standard **ERC-4626** tokenized vault over MockIDRX, with a few rules on top. One vault per invoice means every lender picks each invoice and sees its exact outcome; there is no pooled, automatic lending (which POJK 40/2024 forbids for P2P lending platforms).
+
+## Rules
+
+| Rule | Enforced in |
+| --- | --- |
+| Only wallets with ACE `common.kyc` can deposit | `maxDeposit` returns 0 otherwise |
+| Deposits only while `Funding`, before the deadline, up to what is missing | `maxDeposit` |
+| The deposit that reaches the target pays the seller the advance, atomically | `_deposit` → `_activate` |
+| Shares cannot be transferred | `_update` reverts `SharesNotTransferable` |
+| Withdrawals only after Repaid, Defaulted or Cancelled | `maxWithdraw` / `maxRedeem` |
+| Anyone may repay, cancel after the deadline, or default after due + grace | `repay`, `cancelFunding`, `markDefault` |
+
+## States
+
+<Mermaid
+  chart={`
+stateDiagram-v2
+  direction LR
+  [*] --> Funding: created by factory
+  Funding --> Active: totalAssets ≥ target → advance to seller
+  Funding --> Cancelled: cancelFunding() after fundingDeadline
+  Active --> Repaid: repay() pulls N
+  Active --> Defaulted: markDefault() after dueDate + gracePeriod
+  Cancelled --> [*]: redeem 1:1
+  Repaid --> [*]: redeem N − fee pro rata
+  Defaulted --> [*]: redeem holdback pro rata
+`}
+/>
+
+## What the vault holds
+
+| Moment | Vault balance (Rp100M, 60 days) |
+| --- | --- |
+| Full | 97,000,000 (the target) |
+| After the advance | 17,000,000 (the holdback) |
+| After `repay()` pulls N | 117,000,000 |
+| After holdback to seller and fee to treasury | **99,700,000** for shareholders |
+| If defaulted instead | **17,000,000** for shareholders |
+| If cancelled | everything deposited, 1:1 |
+
+Because shares are minted 1:1 against deposits while funding (the vault is empty at the start and nothing accrues while funding), every lender's share of the final balance equals its share of the target.
+
+## Why ERC-4626
+
+- Lenders' positions are standard: any ERC-4626 tooling can read `totalAssets`, `convertToAssets`, `maxRedeem`.
+- Pro-rata payout on repay, default and cancel comes for free from share accounting; no loops over lenders.
+- Each vault is a separate contract, so one invoice's default can never touch another invoice's money.
+
+## Holdback, explained
+
+The holdback (`target − advance`) is lenders' money that stays in the vault while the invoice is financed. On repayment it goes back to the seller, which is why the seller's net cost is only the discount. On default it is the only thing lenders recover. It is the price of silent factoring: the buyer pays the seller, not the vault, so the vault keeps a cushion.

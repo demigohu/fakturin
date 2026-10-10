@@ -1,0 +1,80 @@
+---
+title: Local setup
+description: Run the whole monorepo on your machine, against the live Arbitrum Sepolia contracts or a local anvil fork.
+---
+
+## Repository
+
+<Files>
+  <Folder name="fakturin" defaultOpen>
+    <Folder name="apps" defaultOpen>
+      <Folder name="web">
+        <File name="Next.js 16 dApp: /, /borrow, /lend, /check, API routes" />
+      </Folder>
+      <Folder name="docs">
+        <File name="This site (Fumadocs)" />
+      </Folder>
+      <Folder name="contracts-solidity">
+        <File name="Foundry: src, test, script, lib/chainlink-ace" />
+      </Folder>
+      <Folder name="fakturin-cre">
+        <File name="Chainlink CRE workflows: verify/, keeper/, scripts, pm2 config" />
+      </Folder>
+    </Folder>
+    <Folder name="packages">
+      <File name="abis: contract ABIs as @repo/abis" />
+      <File name="ui, eslint-config, typescript-config" />
+    </Folder>
+    <Folder name="docs">
+      <File name="PRD.md, TESTING.md" />
+    </Folder>
+  </Folder>
+</Files>
+
+## Prerequisites
+
+| Tool | Version | For |
+| --- | --- | --- |
+| Node.js | 24+ | everything |
+| npm | 11 | workspaces (the repo pins `npm@11.17.0`) |
+| Foundry | recent | contracts, anvil |
+| Bun | 1.x | compiling CRE workflows |
+| CRE CLI | 1.38+ | running workflows |
+
+## Run the apps
+
+```bash
+git clone https://github.com/demigohu/fakturin.git
+cd fakturin
+npm install
+
+cp apps/web/.env.example apps/web/.env    # fill in the addresses from /docs/reference/deployments
+npm run dev                               # turbo: web on :3000, docs on :3001
+```
+
+Or one at a time: `npm run dev -w web`, `npm run dev -w docs`.
+
+The web app reads **`apps/web/.env`** (not `.env.local`). With `NEXT_PUBLIC_VERIFIER=relayer` and a `VERIFIER_PRIVATE_KEY` that holds `VERIFIER_ROLE` and is the ACE issuer, the whole demo works without CRE. See [Web app configuration](/docs/developers/web-app).
+
+## Checks
+
+```bash
+npm run lint
+npm run check-types
+npm run build
+cd apps/contracts-solidity && forge test
+```
+
+## Local chain
+
+Use an anvil fork with Arbitrum Sepolia's chain ID, so wallets and CRE treat it like the testnet:
+
+```bash
+anvil --fork-url https://sepolia-rollup.arbitrum.io/rpc --chain-id 421614 --block-time 1
+```
+
+`--block-time 1` matters: without it the block timestamp stands still between transactions and deadline-based actions (default, cancel) cannot be simulated.
+
+<Callout type="warn" title="Do not overwrite your testnet broadcast">
+  Because the fork uses chain ID 421614, a `forge script --broadcast` against anvil writes to the same `broadcast/…/421614/run-latest.json` as your real Sepolia deploy. Redirect it: `FOUNDRY_BROADCAST=/tmp/fk-broadcast FOUNDRY_CACHE_PATH=/tmp/fk-cache forge script …`.
+</Callout>

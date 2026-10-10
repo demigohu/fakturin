@@ -1,0 +1,84 @@
+---
+title: Identity (Chainlink ACE)
+description: How Fakturin knows that a borrower is the business on the Faktur Pajak and that a lender passed KYC, using Chainlink ACE Cross-Chain Identity.
+---
+
+Fakturin does not keep its own allow-lists. It uses the open-source core of **Chainlink ACE** (Automated Compliance Engine): a cross-chain identity (CCID) per wallet, credentials attached to that CCID, and validators that contracts ask "does this wallet hold the right credentials?".
+
+## The model
+
+<Mermaid
+  caption="Wallet → CCID → credentials, read by two validators"
+  chart={`
+erDiagram
+  WALLET ||--|| CCID : "IdentityRegistry.getIdentity"
+  CCID ||--o{ CREDENTIAL : "CredentialRegistry"
+  CREDENTIAL {
+    bytes32 type "common.kyc | common.kyb | id.fakturin.pkp"
+    uint40 expiresAt "0 = no expiry"
+    bytes data "pkp: abi.encode(npwpHash)"
+  }
+  FUNDER_VALIDATOR }o--|| CREDENTIAL : "requires common.kyc"
+  SELLER_VALIDATOR }o--|| CREDENTIAL : "requires common.kyb + id.fakturin.pkp"
+  FAKTUR_REGISTRY ||--|| FUNDER_VALIDATOR : "isFunder()"
+  FAKTUR_REGISTRY ||--|| SELLER_VALIDATOR : "isSeller()"
+`}
+/>
+
+| Credential (type ID = keccak256 of the name) | Who gets it | Data | Checked by |
+| --- | --- | --- | --- |
+| `common.kyc` | Lenders | none | Funder validator → `FakturRegistry.isFunder` → `FakturVault.maxDeposit` |
+| `common.kyb` | Borrowers | none | Seller validator → `FakturRegistry.isSeller` → `requestVerification` |
+| `id.fakturin.pkp` | Borrowers | `abi.encode(keccak256(NPWP))` | Seller validator, and `sellerNpwpHash` during verification |
+
+## Who can write credentials
+
+Writes to `IdentityRegistry` and `CredentialRegistry` are protected by ACE's **PolicyEngine**, which runs `OnlyAuthorizedSenderPolicy`: only the registered issuer can register identities and credentials. In the demo the issuer is a server route that plays a licensed e-KYC/KYB provider.
+
+<Mermaid
+  chart={`
+sequenceDiagram
+  autonumber
+  actor U as User wallet
+  participant App as Fakturin app
+  participant Iss as Issuer (/api/identity)
+  participant PE as ACE PolicyEngine
+  participant IR as IdentityRegistry
+  participant CR as CredentialRegistry
+  U->>App: Verify (KYC or KYB)
+  App->>U: Sign "Fakturin business verification (KYB) / Wallet / Issued at"
+  U-->>App: signature (free)
+  App->>Iss: kind, address, issuedAt, signature
+  Iss->>Iss: verify signature, age < 15 min, PKP status (KYB)
+  Iss->>IR: registerIdentity(ccid, wallet)
+  IR->>PE: run policy
+  PE-->>IR: allowed (sender = issuer)
+  Iss->>CR: registerCredential(ccid, type, 0, data)
+  CR->>PE: run policy
+  PE-->>CR: allowed
+  Iss-->>App: ccid, tx hashes
+`}
+/>
+
+## The NPWP match
+
+The PKP credential binds a wallet to the hash of one NPWP. When Chainlink verifies an invoice, the result includes the hash of the **seller NPWP printed on the Faktur Pajak**. The registry compares the two:
+
+```solidity
+bytes32 npwp = sellerNpwpHash(seller);           // from the wallet's PKP credential
+if (npwp == bytes32(0) || npwp != v.sellerNpwpHash) return REJECT_SELLER_MISMATCH;
+```
+
+So a wallet can only finance invoices its own business issued, even if it knows other businesses' invoice numbers.
+
+## Privacy
+
+Only the CCID (a hash), the credential type and the NPWP **hash** are onchain. Names, NPWPs and documents stay with the issuer and the tax office.
+
+## Revocation
+
+Removing a credential takes effect on the next call: a lender without `common.kyc` gets `maxDeposit = 0`, a seller without `common.kyb` cannot submit. Existing shares and financed invoices are not affected.
+
+## Licensing
+
+The ACE core contracts are **BUSL-1.1**. Non-production use, as in this demo, is allowed; production use needs a commercial license from Chainlink, or the managed ACE Platform (private beta at the time of writing). The data model is the same, so moving to the Platform later does not change Fakturin's contracts.

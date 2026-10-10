@@ -1,0 +1,74 @@
+---
+title: Deployment topology
+description: Where each part of Fakturin runs, the two automation modes (cre and relayer), and how to operate them.
+---
+
+<Mermaid
+  chart={`
+flowchart LR
+  subgraph User[User device]
+    B[Browser + wallet]
+  end
+  subgraph Host[Web host, e.g. Vercel or VPS]
+    WEB[apps/web<br/>Next.js :3000]
+    DOCS[apps/docs<br/>Fumadocs :3001]
+  end
+  subgraph VPS[VPS with pm2]
+    V[fakturin-cre-verify<br/>verify-listen.sh]
+    K[fakturin-cre-keeper<br/>keeper-loop.sh]
+  end
+  subgraph Chain[Arbitrum Sepolia 421614]
+    C[Fakturin + ACE contracts]
+    F[Chainlink forwarder<br/>0xD412…ca5d]
+  end
+  RPC[(Public RPC<br/>sepolia-rollup.arbitrum.io)]
+  B -- HTTPS --> WEB
+  B -- JSON-RPC --> RPC --> C
+  WEB -- JSON-RPC, relayer key --> RPC
+  V -- WebSocket/HTTP logs --> RPC
+  V -- GET /api/pjap/faktur --> WEB
+  V & K -- reports, CRE_ETH_PRIVATE_KEY --> F --> C
+`}
+/>
+
+## Two automation modes
+
+The web app's `NEXT_PUBLIC_VERIFIER` decides who verifies invoices and closes overdue vaults.
+
+| | `relayer` (default) | `cre` |
+| --- | --- | --- |
+| Verifies invoices | `/api/verify`, called by the app right after submit | `verify` workflow, triggered by the `VerificationRequested` log |
+| Closes vaults | `/api/keeper`, called when a screen shows an overdue vault | `keeper` workflow, every `KEEPER_INTERVAL` seconds |
+| Writes through | `VERIFIER_ROLE` (registry), `closeDue` (keeper) | Chainlink forwarder → `FakturVerifierReceiver` / `FakturKeeper.onReport` |
+| Needs | `VERIFIER_PRIVATE_KEY` on the web server | pm2 processes, `CRE_ETH_PRIVATE_KEY`, `cre login` |
+| Latency | Instant | About 3 s for verification; up to one interval for closing |
+
+In `cre` mode the two relayer routes answer `202 {mode: "cre"}` and do nothing. The identity issuer (`/api/identity`) runs in the web app in both modes; it is not a CRE job.
+
+## Processes
+
+| Process | Command | Restart policy |
+| --- | --- | --- |
+| Web app | `npm run build && npm run start -w web` | Host-managed |
+| Docs | `npm run build && npm run start -w docs` | Host-managed |
+| CRE verify | `scripts/verify-listen.sh` → `cre workflow simulate verify --listen --broadcast` | pm2 `fakturin-cre-verify` |
+| CRE keeper | `scripts/keeper-loop.sh` → `cre workflow simulate keeper` every 60 s | pm2 `fakturin-cre-keeper` |
+
+## Keys
+
+| Key | Lives in | Powers |
+| --- | --- | --- |
+| Deployer `PRIVATE_KEY` | `apps/contracts-solidity/.env` | Deploy only. Admin of registry, NFT, ACE |
+| `VERIFIER_PRIVATE_KEY` | `apps/web/.env` (server only) | `VERIFIER_ROLE`, ACE issuer, pays keeper gas |
+| `CRE_ETH_PRIVATE_KEY` | `apps/fakturin-cre/.env` | Pays gas for CRE reports. No role: the forwarder is what contracts trust. |
+
+None of them can move user funds out of a vault. All `.env` files are gitignored.
+
+## Environments
+
+| Target | Chain | Used for |
+| --- | --- | --- |
+| `staging-settings` | Arbitrum Sepolia | The live demo |
+| `local-settings` | anvil fork of Arbitrum Sepolia on `127.0.0.1:8545`, chain ID 421614 | End-to-end tests without spending testnet ETH |
+
+See [Run Chainlink CRE](/docs/developers/cre) for commands.

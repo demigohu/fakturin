@@ -1,0 +1,89 @@
+---
+title: Contracts
+description: Public functions of every Fakturin contract. Solidity 0.8.28, OpenZeppelin 5.1, Chainlink ACE core.
+---
+
+Source: [`apps/contracts-solidity/src`](https://github.com/demigohu/fakturin/tree/main/apps/contracts-solidity/src). ABIs ship in the `@repo/abis` workspace package.
+
+## FakturRegistry
+
+The source of truth for invoices: IDs, verification, pricing, limits, status, default flags.
+
+| Function | Access | Description |
+| --- | --- | --- |
+| `requestVerification(string fakturNumber) → bytes32` | ACE seller, not flagged | Opens a verification request; status `Pending`. Reverts `AlreadyRegistered`, `SellerIsDefaulted`, `SellerNotVerified`. |
+| `fulfillVerification(bytes32 id, Verification v)` | `VERIFIER_ROLE` | Writes the PJAP result; creates the vault and mints the NFT, or rejects with a code. Reverts `NotPending`. |
+| `quote(uint256 nominal, uint64 dueDate) → Quote` | view | `{target, advance, discount, fee}` if verified now. |
+| `getInvoice(bytes32 id) → Invoice` | view | Full invoice record. |
+| `computeInvoiceId(string number) → bytes32` | pure | `keccak256("FP:" + normalized)`. |
+| `fakturNumberOf(bytes32 id) → string` | view | Normalized number. |
+| `invoiceOfVault(address vault) → bytes32` | view | Reverse lookup. |
+| `isFunder(address)`, `isSeller(address)` | view | ACE validator checks. |
+| `sellerNpwpHash(address) → bytes32` | view | NPWP hash from the wallet's PKP credential, or zero. |
+| `sellerDefaulted(address)`, `sellerOutstanding(address)`, `buyerOutstanding(bytes32)` | view | Risk state. |
+| `onFunded`, `onRepaid`, `onDefaulted`, `onFundingFailed` | the invoice's vault | Status hooks. |
+| `setParameters(...)`, `setIdentity(...)`, `setTreasury(address)` | `ADMIN_ROLE` | Configuration. |
+
+## FakturVault
+
+ERC-4626 over MockIDRX, one per invoice. All terms are `immutable`.
+
+| Function | Access | Description |
+| --- | --- | --- |
+| `deposit(uint256 assets, address receiver)` | ACE funder | Standard ERC-4626; capped by `maxDeposit`. The filling deposit pays the seller. |
+| `redeem(uint256 shares, address receiver, address owner)` | owner | Only after close. |
+| `repay()` | anyone | Pulls `nominal`; sends `holdback` to the seller and `fee` to the treasury. |
+| `markDefault()` | anyone | After `defaultableAt()`. |
+| `cancelFunding()` | anyone | After `fundingDeadline` while still `Funding`. |
+| `state() → State` | view | `Funding`, `Active`, `Repaid`, `Defaulted`, `Cancelled`. |
+| `invoiceId`, `seller`, `nominal`, `target`, `advance`, `holdback`, `fee`, `treasury`, `fundingDeadline`, `dueDate`, `gracePeriod` | view | Terms. |
+| `defaultableAt() → uint256` | view | `dueDate + gracePeriod`. |
+
+## FakturVaultFactory
+
+| Function | Access | Description |
+| --- | --- | --- |
+| `create(Terms) → address` | registry | Deploys a vault named after the invoice. |
+| `vaults(uint256) → address`, `vaultCount()` | view | Every vault ever created. |
+| `setRegistry(address)` | once | Wiring during deploy. |
+
+## FakturNFT
+
+ERC-721 `Fakturin Faktur Pajak` (`FKTR`), token ID = `uint256(invoiceId)`. Transfers revert `TransferDisabled`; only mint and burn by `REGISTRY_ROLE`. `tokenURI` delegates to the renderer; `setRenderer` is admin-only.
+
+## FakturRenderer
+
+| Function | Description |
+| --- | --- |
+| `svg(bytes32 id) → string` | The invoice drawn as SVG with its status stamp. Works after burn. |
+| `tokenURI(bytes32 id) → string` | `data:application/json;base64,…` with the SVG as `image`. |
+
+## FakturVerifierReceiver
+
+`onReport(bytes metadata, bytes report)`: forwarder only. Decodes the `Verification` tuple and calls `fulfillVerification`. Emits `VerificationDelivered(id, valid, rejectCode)`.
+
+## FakturKeeper
+
+| Function | Access | Description |
+| --- | --- | --- |
+| `closable(uint256 max) → address[]` | view | Vaults that can be cancelled or defaulted now. |
+| `actionFor(address vault) → Action` | view | `None`, `CancelFunding`, `MarkDefault`. |
+| `onReport(bytes, bytes report)` | forwarder | Closes `abi.decode(report, (address[]))`. |
+| `closeDue(uint256 max) → uint256` | anyone | Closes up to `max` due vaults. |
+
+## MockIDRX
+
+ERC-20 `Mock IDRX (test)` (`MockIDRX`), **2 decimals**. `faucet(address to)` mints Rp1,000,000,000 to anyone; `mint` is owner-only.
+
+## Chainlink ACE
+
+Self-deployed from `smartcontractkit/chainlink-ace` (commit `60f04505`) behind ERC1967 proxies by `script/AceDeployer.sol`:
+
+| Contract | Configuration |
+| --- | --- |
+| `PolicyEngine` | default allow |
+| `OnlyAuthorizedSenderPolicy` | on `registerIdentity`, `registerIdentities`, `removeIdentity`, `registerCredential`, `registerCredentials`, `removeCredential`, `renewCredential`; authorized sender = the issuer |
+| `IdentityRegistry` | wallet → CCID |
+| `CredentialRegistry` | CCID → credentials |
+| `CredentialRegistryIdentityValidator` (funder) | requires `common.kyc` |
+| `CredentialRegistryIdentityValidator` (seller) | requires `common.kyb` and `id.fakturin.pkp` |

@@ -1,0 +1,71 @@
+---
+title: Invoice verification (Chainlink CRE)
+description: How a Faktur Pajak number becomes a verified invoice with a vault, through a Chainlink CRE workflow that asks the tax system.
+---
+
+A seller's transaction only **asks** for verification. The answer comes from outside the chain: the tax system, reached through a PJAP (a licensed tax application provider with host-to-host access to Coretax). Fakturin uses a **Chainlink CRE workflow** to fetch that answer and write it onchain, so the contracts never trust the seller or the Fakturin server about an invoice.
+
+## The flow
+
+<Mermaid
+  chart={`
+sequenceDiagram
+  autonumber
+  actor S as Seller
+  participant R as FakturRegistry
+  participant CRE as CRE verify workflow
+  participant P as PJAP API (simulated)
+  participant F as Chainlink forwarder
+  participant V as FakturVerifierReceiver
+  participant Fac as FakturVaultFactory
+  participant N as FakturNFT
+  S->>R: requestVerification("04002600012345")
+  R-->>CRE: event VerificationRequested(id, seller, number)
+  CRE->>P: GET /api/pjap/faktur/{number}
+  P-->>CRE: status, seller NPWP, buyer NPWP, total, dates
+  Note over CRE: every node must get the identical result (consensus)
+  CRE->>F: signed report (Verification tuple)
+  F->>V: onReport(metadata, report)
+  V->>R: fulfillVerification(id, v)
+  alt valid and NPWP matches and within tenor and limits
+    R->>Fac: create(Terms)
+    Fac-->>R: vault
+    R->>N: mint(vault, id)
+    R-->>S: InvoiceVerified, status Funding
+  else
+    R-->>S: InvoiceRejected(code), status Rejected
+  end
+`}
+/>
+
+## The report
+
+The workflow writes one ABI-encoded tuple, the `Verification` struct:
+
+<TypeTable
+  type={{
+    valid: { type: "bool", description: "PJAP status is VALID" },
+    rejectCode: { type: "uint8", description: "1 not found, 2 cancelled, 3 replaced (0 when valid)" },
+    sellerNpwpHash: { type: "bytes32", description: "keccak256 of the seller NPWP printed on the Faktur Pajak" },
+    buyerNpwpHash: { type: "bytes32", description: "keccak256 of the buyer NPWP, used for the per-buyer limit" },
+    nominal: { type: "uint256", description: "Invoice total in token units (rupiah × 100)" },
+    issuedAt: { type: "uint64", description: "Faktur Pajak date, unix seconds" },
+    dueDate: { type: "uint64", description: "Payment due date, unix seconds" },
+  }}
+/>
+
+The registry then adds its own checks (`_rejectCode`): the NPWP match against the wallet's ACE credential, due date in the future, tenor at most 180 days, and the seller and buyer limits. See [reject codes](/docs/reference/parameters#reject-codes).
+
+## Why CRE and not the Fakturin server
+
+- **No single writer.** In a deployed CRE workflow, several Chainlink nodes each call PJAP and must agree on an identical result before a report is signed. The receiver only accepts reports through Chainlink's forwarder.
+- **Same code, two modes.** The demo relayer (`/api/verify`) runs exactly the same mapping and writes through `VERIFIER_ROLE`. It exists so the demo can verify instantly without CRE. Switching to CRE is one environment variable; see [Deployment](/docs/architecture/deployment).
+- **Real PJAP later.** The simulated API returns the same JSON shape as a PJAP lookup. Pointing `pjapBaseUrl` at a real PJAP is the only change.
+
+## The invoice ID
+
+`invoiceId = keccak256("FP:" + normalized number)`. Normalizing removes dots, dashes and spaces and maps a replacement number (suffix `A`) to its base number. So a Faktur Pajak and its replacement share one ID, and one number in any format maps to one registry entry: it can be financed at most once.
+
+<Callout title="Simulated today">
+  Machine access to Coretax goes through a PJAP host-to-host API (PER-03/PJ/2022). Until Fakturin has PJAP staging access, the app serves a deterministic simulation at `/api/pjap/faktur/{number}`. See [API reference](/docs/reference/api).
+</Callout>

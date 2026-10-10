@@ -1,0 +1,60 @@
+---
+title: Money flow
+description: Where every rupiah goes for a Rp100M, 60-day invoice, when it is repaid and when it defaults.
+---
+
+All amounts in MockIDRX for a **Rp100,000,000** invoice due in **60 days** (discount 3M, target 97M, advance 80M, holdback 17M, fee 0.3M).
+
+## Repaid
+
+<Mermaid
+  chart={`
+sankey-beta
+Lenders,Vault (target),97
+Vault (target),Seller (advance),80
+Vault (target),Vault (holdback),17
+Seller repays,Vault (settlement),100
+Vault (holdback),Seller (holdback back),17
+Vault (settlement),Treasury (fee),0.3
+Vault (settlement),Lenders (redeem),99.7
+`}
+/>
+
+| Party | In | Out | Net |
+| --- | --- | --- | --- |
+| Seller | 80M advance + 17M holdback | 100M repayment | **−3M** (the cost of being paid 60 days early) |
+| Lenders | 99.7M redeemed | 97M deposited | **+2.7M** (2.78%) |
+| Treasury | 0.3M | 0 | **+0.3M** |
+| Total | | | 0 |
+
+## Defaulted
+
+<Mermaid
+  chart={`
+sankey-beta
+Lenders,Vault (target),97
+Vault (target),Seller (advance),80
+Vault (target),Vault (holdback),17
+Vault (holdback),Lenders (redeem),17
+`}
+/>
+
+| Party | Net |
+| --- | --- |
+| Seller | **+80M** onchain, but flagged forever and liable offchain (recourse) |
+| Lenders | **−80M** (recover 17M of 97M) |
+| Treasury | 0 |
+
+## Cancelled (target not reached)
+
+Every deposit is returned 1:1. Nobody pays anything except gas.
+
+## Token flows by function
+
+| Function | Token movements |
+| --- | --- |
+| `deposit(a, r)` | lender → vault `a`; vault mints `a` shares to `r` |
+| last `deposit` | additionally vault → seller `advance` |
+| `repay()` | payer → vault `N`; vault → seller `holdback`; vault → treasury `fee` |
+| `redeem(s, r, o)` | vault burns `s` shares of `o`; vault → `r` its share of the balance |
+| `markDefault()`, `cancelFunding()` | none (only the state changes) |

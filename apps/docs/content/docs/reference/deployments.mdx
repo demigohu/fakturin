@@ -1,0 +1,19 @@
+---
+title: Deployed addresses
+description: Fakturin v3 on Arbitrum Sepolia. All contracts are verified on Arbiscan.
+---
+
+**Network:** Arbitrum Sepolia, chain ID `421614`. **Deploy block (L2):** `317643441`.
+
+<Deployments />
+
+| Address | Role |
+| --- | --- |
+| `0x6c54435C36d3A83A07b264dE8b81ee04E5Ade11d` | Demo operator: relayer (`VERIFIER_ROLE`), ACE issuer, treasury |
+| `0xD41263567DdfeAd91504199b8c6c87371e83ca5d` | Chainlink CRE simulation forwarder accepted by the receiver and keeper |
+
+<Callout type="warn" title="Deploy block on Arbitrum">
+  Inside a contract on Arbitrum, `block.number` is the **L1** block number. Event scans must start from the **L2** block of the first deploy transaction (Arbiscan, or `blockNumber` in `run-latest.json`), not from a value logged by the deploy script.
+</Callout>
+
+Per-invoice vaults are created by the factory at verification and are not verified by `forge --verify`; they share the verified `FakturVault` bytecode.

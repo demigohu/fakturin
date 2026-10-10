@@ -1,0 +1,56 @@
+---
+title: Security and trust model
+description: Who can do what, what each party has to trust, the threats Fakturin addresses and the ones it does not.
+---
+
+## Permissions
+
+| Action | Who may call | Guard |
+| --- | --- | --- |
+| `requestVerification` | Any wallet passing the ACE seller validator, not flagged | `isSeller`, `sellerDefaulted` |
+| `fulfillVerification` | `VERIFIER_ROLE`: the CRE receiver and the demo relayer | AccessControl |
+| `FakturVerifierReceiver.onReport` | Chainlink forwarder only | `OnlyForwarder` |
+| `FakturKeeper.onReport` | Chainlink forwarder only | `OnlyForwarder` |
+| `deposit` / `mint` | Wallets passing the ACE funder validator | `maxDeposit` = 0 otherwise |
+| `repay` | Anyone (pays N) | state `Active` |
+| `cancelFunding` | Anyone | after `fundingDeadline` |
+| `markDefault` | Anyone | after `dueDate + gracePeriod` |
+| `redeem` / `withdraw` | Share owner | state closed |
+| `onFunded` … `onFundingFailed` | The invoice's own vault | `onlyVaultOf` |
+| `NFT.mint` / `burn` | Registry | `REGISTRY_ROLE` |
+| `setParameters`, `setIdentity`, `setTreasury` | Admin | `ADMIN_ROLE` |
+| ACE `registerIdentity` / `registerCredential` | Authorized issuer | PolicyEngine + `OnlyAuthorizedSenderPolicy` |
+
+## What each party trusts
+
+| Party | Trusts | Does not need to trust |
+| --- | --- | --- |
+| Lender | The PJAP data, the KYC/KYB issuer, the seller's offchain recourse, the contracts | Fakturin's server with money, other lenders |
+| Seller | The contracts, the price shown before submitting | Lenders, Fakturin's server with money |
+| Fakturin admin | | Can change parameters for **future** invoices only; cannot move vault funds |
+
+## Threats
+
+| Threat | Mitigation |
+| --- | --- |
+| Same invoice financed twice | Registry keyed by national number; financed numbers can never be resubmitted; the NFT is locked in one vault. |
+| Someone finances another business's invoice | NPWP hash from PJAP must equal the wallet's ACE PKP credential (`SELLER_MISMATCH`). |
+| Fake verification result | Only `VERIFIER_ROLE` can write; the receiver accepts only the Chainlink forwarder; in production the result needs DON consensus. |
+| Seller does not repay | Holdback, public default flag, no further submissions, per-seller and per-buyer limits, offchain recourse. |
+| Concentration on one buyer | Per-buyer-NPWP limit across all sellers. |
+| Credential forged or stale | Only the authorized issuer can write; revocation applies on the next call. |
+| Reentrancy | `ReentrancyGuard` on vault entry points; checks-effects-interactions; state set before transfers. |
+| Unlimited approvals | The app requests the exact amount for every approve. |
+| Keeper griefing | Closing is permissionless and idempotent; each close has a fixed gas budget; failures do not block others. |
+| Admin abuse | Parameters only affect new quotes; `setParameters` rejects an advance above the target; vault terms are immutable. |
+
+## Not addressed
+
+- **Delivery and collusion.** A valid Faktur Pajak proves a taxed sale was declared, not that goods arrived. A seller and buyer acting together can still create a fake trade, though it costs them VAT and leaves a tax trail.
+- **Data source integrity.** The PJAP and KYC/KYB providers are trusted. They are simulated in this demo.
+- **Audit.** The contracts have a Foundry test suite (37 tests covering every user story and rejection path) but no external audit.
+- **Legal status of shares.** Co-funding claims may be treated as securities; shares are non-transferable and KYC-gated, but this needs legal review.
+
+## Privacy
+
+Onchain data is limited to invoice IDs, NPWP hashes, CCIDs, amounts, dates and statuses. Names, NPWPs and documents never touch the chain. Note that an NPWP hash is not secret against someone who already knows the NPWP: it hides the number from the public, not from a party that can guess it.

@@ -1,0 +1,60 @@
+---
+title: What is Fakturin
+description: Invoice financing for Indonesian small businesses, built on verified Faktur Pajak, Chainlink and per-invoice ERC-4626 vaults.
+---
+
+Fakturin lets a small Indonesian supplier get paid **today** for an invoice its buyer will pay in 30 to 90 days. The supplier's Faktur Pajak (the tax invoice every VAT-registered business issues through Coretax) is checked with the tax system by Chainlink, locked as an NFT inside a vault made just for that invoice, and funded by several verified lenders together. The seller gets 80% of the invoice the moment the vault is full and repays the full amount on the due date.
+
+<Figure
+  src="/illustrations/faktur.webp"
+  alt="A Faktur Pajak sheet"
+  caption="One Faktur Pajak number can be financed exactly once, and only by the business whose NPWP is printed on it."
+/>
+
+## The problem
+
+Small suppliers wait 30 to 90 days to be paid. In Indonesia, 54% of B2B sales are on credit, the average term is 50 days and 49% of invoices are paid late (Atradius Payment Practices Barometer, 2025). Invoice financing fixes cash flow, but lenders hesitate for two reasons:
+
+1. **Double financing.** The same invoice can be pledged to several lenders who cannot see each other.
+2. **Ownership.** Anyone who knows an invoice number can claim to be its seller.
+
+## How Fakturin answers it
+
+| Risk | What Fakturin does |
+| --- | --- |
+| Fake invoice | Chainlink CRE asks the tax system (through a PJAP, a licensed tax application provider) whether the Faktur Pajak exists and is valid. |
+| Somebody else's invoice | The seller proves its NPWP once (KYB) with a Chainlink ACE credential. The NPWP on the Faktur Pajak must match it, or the invoice is rejected. |
+| Double financing | The registry key is the national Faktur Pajak number. Once financed, that number can never be financed again, anywhere on Fakturin. |
+| Anonymous money | Lenders pass KYC once (Chainlink ACE credential). Vaults only accept deposits from KYC'd wallets. |
+| Seller does not repay | 20% of the invoice stays in the vault until repayment (the holdback) and goes to lenders on default; the seller is flagged and cannot submit again. |
+
+## Who does what
+
+| Role | Uses the app? | Does |
+| --- | --- | --- |
+| **Borrower** (seller, PKP) | Yes, [`/borrow`](/docs/guides/borrower) | Verifies the business once, submits a Faktur Pajak, receives 80%, repays on the due date. |
+| **Lender** (funder) | Yes, [`/lend`](/docs/guides/lender) | Passes KYC once, lends any amount to the invoices it picks, withdraws with a return. |
+| **Anyone** | Yes, [`/check`](/docs/guides/check) | Looks up whether a Faktur Pajak was ever financed. No wallet needed. |
+| **Buyer** (the invoice debtor) | No | Pays the seller as usual. Fakturin is *silent factoring*: the buyer is not notified. |
+| **Verifier** | Automatic | Chainlink CRE workflow (or the demo relayer) writes the tax-office result onchain. |
+| **Keeper** | Automatic | Chainlink CRE cron (or the demo relayer) closes vaults whose deadline passed. Nobody presses "default". |
+
+## Real vs simulated
+
+Fakturin is a hackathon MVP on **Arbitrum Sepolia**. The contracts and the Chainlink parts are real; the outside world is simulated and labelled as such in the app.
+
+| Part | Status |
+| --- | --- |
+| Smart contracts (registry, vaults, NFT, keeper, renderer) | Real, verified on Arbiscan |
+| Chainlink ACE identity contracts | Real (self-deployed open-source core, BUSL-1.1 non-production use) |
+| Chainlink CRE workflows | Real code, run with `cre workflow simulate --broadcast`; DON deployment needs a commercial agreement |
+| PJAP / Coretax data | **Simulated** API with the same JSON shape |
+| KYC/KYB provider | **Simulated** issuer route; the onchain credentials are real |
+| Rupiah | **MockIDRX**, a test copy of the IDRX stablecoin (2 decimals, 1 token = Rp1). Not money. |
+
+<Cards>
+  <Card title="Try it in 5 minutes" href="/docs/getting-started" />
+  <Card title="Borrower guide" href="/docs/guides/borrower" />
+  <Card title="Lender guide" href="/docs/guides/lender" />
+  <Card title="Architecture" href="/docs/architecture" />
+</Cards>

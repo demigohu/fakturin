@@ -1,0 +1,63 @@
+---
+title: Invoice lifecycle
+description: The eight statuses of a Faktur Pajak in FakturRegistry, who moves it between them, and which ones allow resubmission.
+---
+
+Status only moves forward. An invoice that was ever **Financed** can never be submitted again; one that was **Rejected** or whose **funding failed** can.
+
+<Mermaid
+  caption="FakturRegistry.Status and FakturVault.State"
+  chart={`
+stateDiagram-v2
+  direction LR
+  [*] --> Pending: requestVerification (seller)
+  Pending --> Rejected: fulfillVerification, code ≠ 0
+  Pending --> Funding: fulfillVerification valid, vault + NFT created
+  Funding --> Financed: deposit reaches target, 80% paid out
+  Funding --> FundingFailed: deadline passed, keeper cancelFunding
+  Financed --> Repaid: repay() (anyone pays nominal)
+  Financed --> Defaulted: due + grace passed, keeper markDefault
+  Rejected --> Pending: resubmit
+  FundingFailed --> Pending: resubmit
+  Repaid --> [*]
+  Defaulted --> [*]
+`}
+/>
+
+| # | Registry status | Vault state | NFT | Moved by |
+| --- | --- | --- | --- | --- |
+| 0 | None | none | none | |
+| 1 | Pending | none | none | Seller, `requestVerification` |
+| 2 | Rejected | none | none | Verifier, `fulfillVerification` |
+| 3 | Funding | `Funding` | minted to vault, VERIFIED | Verifier, `fulfillVerification` |
+| 4 | Financed | `Active` | FINANCED | Lender whose deposit fills the target |
+| 5 | Repaid | `Repaid` | burned, LUNAS | Whoever calls `repay()` (normally the seller) |
+| 6 | Defaulted | `Defaulted` | burned, DEFAULT | Keeper or anyone, `markDefault()` |
+| 7 | FundingFailed | `Cancelled` | burned, UNFUNDED | Keeper or anyone, `cancelFunding()` |
+
+## Timing
+
+<Mermaid
+  chart={`
+gantt
+  dateFormat  YYYY-MM-DD
+  axisFormat  %d %b
+  title Rp100M invoice, verified 1 Oct, due 30 Nov
+  section Funding
+  Funding window (3 days)     :active, f, 2026-10-01, 3d
+  section Financed
+  Seller has 80% in hand       :a, after f, 2026-11-30
+  section Close
+  Repay by due date            :milestone, m1, 2026-11-30, 0d
+  Grace period, then default   :crit, g, 2026-11-30, 1d
+`}
+/>
+
+- The **funding window** (3 days) starts at verification. If the vault is not full by then, it can be cancelled.
+- The **tenor** (verification to due date) sets the price and must be at most 180 days.
+- After the **due date plus the grace period** (60 seconds in the demo), an unpaid vault can be defaulted.
+- Repayment is possible any time while the vault is `Active`, including after the due date, until someone defaults it.
+
+## Events
+
+Every transition emits `InvoiceStatusChanged(invoiceId, status, actor)` from the registry, plus a specific event (`VerificationRequested`, `InvoiceVerified`, `InvoiceRejected`, `Funded`, `Repaid`, `Defaulted`, `FundingCancelled`, `SellerFlagged`). The app builds every list from these events. See [Events and errors](/docs/reference/events-errors).

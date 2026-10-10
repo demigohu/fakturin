@@ -1,0 +1,57 @@
+---
+title: Parameters and codes
+description: Registry parameters with their demo values, the status enum and the verification reject codes.
+---
+
+## Parameters
+
+Set by `ADMIN_ROLE` with `setParameters`. Changes apply to invoices verified afterwards; existing vaults keep their immutable terms.
+
+| Name | Demo value | Meaning |
+| --- | --- | --- |
+| `ratePer30dBps` | `150` | Seller's all-in cost per 30 days of tenor (1.5%) |
+| `platformFeeBps` | `1000` | Share of that cost kept by the treasury on repayment (10%) |
+| `advanceBps` | `8000` | Paid to the seller when funded (80% of the invoice) |
+| `maxTenor` | `180 days` | Longest allowed time from verification to due date |
+| `fundingWindow` | `3 days` | Time to fill the vault |
+| `gracePeriod` | `60` seconds | After the due date, before default is allowed (days in production) |
+| `sellerLimit` | `200 000 000e2` | Open financing per seller wallet (Rp200M) |
+| `buyerLimit` | `500 000 000e2` | Open financing per buyer NPWP hash (Rp500M) |
+| `treasury` | operator address | Receives fees (`setTreasury`) |
+
+`setParameters` reverts `InvalidParameters` when `platformFeeBps > 10000`, or when `advanceBps × 30 days + ratePer30dBps × maxTenor > 10000 × 30 days`, that is, when the advance could exceed the funding target at the longest tenor. `setTreasury` rejects the zero address.
+
+## Invoice status
+
+| Value | Name | App label |
+| --- | --- | --- |
+| 0 | `None` | Never submitted |
+| 1 | `Pending` | Checking |
+| 2 | `Rejected` | Rejected |
+| 3 | `Funding` | Raising funds |
+| 4 | `Financed` | Financed |
+| 5 | `Repaid` | Repaid |
+| 6 | `Defaulted` | Defaulted |
+| 7 | `FundingFailed` | Funding failed |
+
+## Reject codes
+
+| Code | Constant | Source | Meaning |
+| --- | --- | --- | --- |
+| 1 | `REJECT_NOT_FOUND` | PJAP | No such Faktur Pajak |
+| 2 | `REJECT_CANCELLED` | PJAP | Cancelled (dibatalkan) |
+| 3 | `REJECT_REPLACED` | PJAP | Replaced by a newer Faktur Pajak (diganti) |
+| 4 | `REJECT_SELLER_MISMATCH` | Registry | NPWP on the Faktur Pajak is not the wallet's PKP credential |
+| 5 | `REJECT_EXPIRED` | Registry | Due date already passed |
+| 6 | `REJECT_LIMIT` | Registry | Seller or buyer limit would be exceeded |
+| 7 | `REJECT_TENOR` | Registry | Due date more than `maxTenor` away |
+
+## Roles
+
+| Role | Contract | Holder |
+| --- | --- | --- |
+| `DEFAULT_ADMIN_ROLE`, `ADMIN_ROLE` | FakturRegistry | Deployer |
+| `VERIFIER_ROLE` | FakturRegistry | FakturVerifierReceiver, demo relayer |
+| `REGISTRY_ROLE` | FakturNFT | FakturRegistry |
+| `DEFAULT_ADMIN_ROLE` | FakturNFT | Deployer |
+| Authorized issuer | ACE OnlyAuthorizedSenderPolicy | Demo relayer (simulated KYC/KYB provider) |

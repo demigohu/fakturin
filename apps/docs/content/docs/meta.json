@@ -1,0 +1,23 @@
+{
+  "title": "Fakturin",
+  "pages": [
+    "---Start here---",
+    "index",
+    "getting-started",
+    "---User guides---",
+    "...guides",
+    "---Concepts---",
+    "...concepts",
+    "---Architecture---",
+    "...architecture",
+    "---Reference---",
+    "...reference",
+    "---Developers---",
+    "...developers",
+    "---More---",
+    "compliance",
+    "roadmap",
+    "faq",
+    "glossary"
+  ]
+}

@@ -1,0 +1,155 @@
+---
+title: Sequence diagrams
+description: Every user journey in Fakturin as a sequence diagram, from onboarding to repayment, default and cancellation.
+---
+
+## 1. Onboarding (KYB for borrowers, KYC for lenders)
+
+<Mermaid
+  chart={`
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant App as Web app
+  participant PJ as /api/pjap/account
+  participant Iss as /api/identity (issuer)
+  participant ACE as ACE registries + PolicyEngine
+  U->>App: Verify your business (or identity)
+  opt KYB only
+    App->>PJ: GET account for wallet
+    PJ-->>App: business name, NPWP, PKP = true
+  end
+  App->>U: personal_sign(message)
+  U-->>App: signature
+  App->>Iss: POST {kind, address, issuedAt, signature}
+  Iss->>Iss: verifyMessage, freshness, PKP check
+  Iss->>ACE: registerIdentity(ccid, wallet)
+  Iss->>ACE: registerCredential(ccid, kyc | kyb + pkp(npwpHash))
+  ACE-->>Iss: allowed by OnlyAuthorizedSenderPolicy
+  Iss-->>App: ccid + tx hashes
+  App-->>U: Verified ✓
+`}
+/>
+
+## 2. Submit and verify
+
+<Mermaid
+  chart={`
+sequenceDiagram
+  autonumber
+  actor S as Seller
+  participant App as Web app
+  participant R as FakturRegistry
+  participant ACE as ACE seller validator
+  participant CRE as Verifier (CRE or /api/verify)
+  participant P as PJAP
+  S->>App: Submit Faktur Pajak
+  App->>R: requestVerification(number)
+  R->>ACE: isSeller(seller)?
+  ACE-->>R: kyb + pkp ✓
+  R-->>R: status Pending, emit VerificationRequested
+  R-->>CRE: event (CRE listener) or POST /api/verify (relayer mode)
+  CRE->>P: GET faktur/{number}
+  P-->>CRE: JSON
+  CRE->>R: fulfillVerification(id, v) via receiver
+  R->>R: NPWP match, due, tenor, limits
+  R-->>App: InvoiceVerified (vault) or InvoiceRejected (code)
+  App-->>S: Raising funds / Rejected: reason
+`}
+/>
+
+## 3. Lend and payout
+
+<Mermaid
+  chart={`
+sequenceDiagram
+  autonumber
+  actor A as Lender A
+  actor B as Lender B
+  participant T as MockIDRX
+  participant V as FakturVault
+  participant R as FakturRegistry
+  actor S as Seller
+  A->>T: approve(V, 50M)
+  A->>V: deposit(50M, A)
+  V->>R: isFunder(A)? (maxDeposit)
+  V-->>A: 50M shares
+  B->>T: approve(V, 47M)
+  B->>V: deposit(47M, B)
+  V-->>B: 47M shares
+  Note over V: totalAssets = 97M = target
+  V->>R: onFunded(id) → Financed
+  V->>T: transfer(S, 80M)
+  T-->>S: +80M
+`}
+/>
+
+## 4. Repay and withdraw
+
+<Mermaid
+  chart={`
+sequenceDiagram
+  autonumber
+  actor S as Seller
+  participant T as MockIDRX
+  participant V as FakturVault
+  participant R as FakturRegistry
+  participant N as FakturNFT
+  participant Tr as Treasury
+  actor A as Lender A
+  S->>T: approve(V, 100M)
+  S->>V: repay()
+  V->>T: transferFrom(S, V, 100M)
+  V->>T: transfer(S, 17M holdback)
+  V->>T: transfer(Tr, 0.3M fee)
+  V->>R: onRepaid(id)
+  R->>N: burn(id)
+  R-->>R: status Repaid, release limits
+  A->>V: redeem(50M shares, A, A)
+  V->>T: transfer(A, 51.39M)
+`}
+/>
+
+## 5. Default (no button)
+
+<Mermaid
+  chart={`
+sequenceDiagram
+  autonumber
+  participant K as Keeper (CRE cron or /api/keeper)
+  participant FK as FakturKeeper
+  participant V as FakturVault
+  participant R as FakturRegistry
+  participant N as FakturNFT
+  actor A as Lender A
+  Note over V: Active, dueDate + grace passed, not repaid
+  K->>FK: onReport([V]) or closeDue(10)
+  FK->>V: markDefault() {gas 250k}
+  V->>R: onDefaulted(id)
+  R->>R: sellerDefaulted[seller] = true, emit SellerFlagged
+  R->>N: burn(id)
+  A->>V: redeem(shares)
+  V-->>A: share of 17M holdback
+`}
+/>
+
+## 6. Funding failed
+
+<Mermaid
+  chart={`
+sequenceDiagram
+  autonumber
+  participant K as Keeper
+  participant FK as FakturKeeper
+  participant V as FakturVault
+  participant R as FakturRegistry
+  actor A as Lender A
+  Note over V: Funding, fundingDeadline passed, below target
+  K->>FK: closeDue / onReport
+  FK->>V: cancelFunding()
+  V->>R: onFundingFailed(id) → FundingFailed, NFT burned
+  A->>V: redeem(shares)
+  V-->>A: deposit back 1:1
+  Note over R: seller may submit the number again
+`}
+/>

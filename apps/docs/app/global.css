@@ -1,0 +1,147 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+/*
+ * Fakturin docs theme: the same Overflow Grid tokens as apps/web (see DESIGN.md).
+ * Paper and navy ink, Sui blue as the single accent, Geist, square corners, light only.
+ */
+@theme {
+  --color-fd-background: #f7f7f7;
+  --color-fd-foreground: #000f1d;
+  --color-fd-muted: #ececec;
+  --color-fd-muted-foreground: #61686d;
+  --color-fd-popover: #ffffff;
+  --color-fd-popover-foreground: #000f1d;
+  --color-fd-card: #ffffff;
+  --color-fd-card-foreground: #000f1d;
+  --color-fd-border: #bbbec0;
+  --color-fd-primary: #000f1d;
+  --color-fd-primary-foreground: #f7f7f7;
+  --color-fd-secondary: #f2eee4;
+  --color-fd-secondary-foreground: #000f1d;
+  --color-fd-accent: #e6e6e6;
+  --color-fd-accent-foreground: #000f1d;
+  --color-fd-ring: #4da2ff;
+  --color-fd-overlay: rgb(0 15 29 / 0.25);
+  --color-fd-info: #4da2ff;
+
+  /* Everything structural is square (DESIGN.md: radius 0). */
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
+
+  --font-sans: var(--font-geist-sans), Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+:root {
+  --surface: #f7f7f7;
+  --surface-warm: #f2eee4;
+  --surface-muted: #dfdfdf;
+  --ink: #000f1d;
+  --ink-raised: #31404e;
+  --text-muted: #61686d;
+  --line: #bbbec0;
+  --accent: #4da2ff;
+  --cat-yellow: #ffd731;
+  --cat-orange: #ff7a00;
+  --cat-green: #55db9c;
+  --cat-violet: #5c4ade;
+  --cat-lilac: #e9ccff;
+  --cat-cyan: #6de6f8;
+  --hl-lime: #beff4d;
+  --ease: cubic-bezier(0.525, 0, 0, 1);
+  color-scheme: light;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+body {
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+/* Active sidebar entry: the Sui-blue block used for the active nav in the app. */
+#nd-sidebar a[data-active="true"] {
+  background: var(--accent);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* Prose: tighter headings, mono code in ink. */
+.prose {
+  --tw-prose-headings: var(--ink);
+  --tw-prose-links: var(--ink);
+}
+
+.prose :where(h2) {
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
+.prose :where(h3) {
+  font-weight: 500;
+}
+
+.prose :where(table) {
+  font-size: 0.875rem;
+}
+
+.prose :where(thead th) {
+  background: var(--surface-warm);
+}
+
+.prose :where(a):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+/* Graph-paper motif (hero only). */
+.graph-paper {
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--accent) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--accent) 55%, transparent) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Square everything, including pills (search box, step numbers). DESIGN.md: radius 0. */
+.rounded-full {
+  border-radius: 0;
+}

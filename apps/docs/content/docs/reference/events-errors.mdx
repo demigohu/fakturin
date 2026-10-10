@@ -1,0 +1,43 @@
+---
+title: Events and errors
+description: Every event and custom error emitted by Fakturin contracts.
+---
+
+## Events
+
+| Contract | Event | When |
+| --- | --- | --- |
+| Registry | `VerificationRequested(bytes32 indexed invoiceId, address indexed seller, string fakturNumber)` | Seller submits. Triggers the CRE verify workflow. |
+| Registry | `InvoiceVerified(bytes32 indexed invoiceId, address indexed vault, uint256 nominal, uint256 target, uint64 dueDate)` | Valid result, vault created |
+| Registry | `InvoiceRejected(bytes32 indexed invoiceId, uint8 code)` | Rejected result |
+| Registry | `InvoiceStatusChanged(bytes32 indexed invoiceId, Status status, address actor)` | Every transition |
+| Registry | `SellerFlagged(address indexed seller, bytes32 indexed invoiceId)` | Default |
+| Registry | `IdentityConfigured(...)`, `ParametersUpdated(address actor)` | Admin changes |
+| Vault | `Funded(uint256 advance, uint256 holdback)` | Target reached, seller paid |
+| Vault | `Repaid(address indexed payer, uint256 amount, uint256 holdbackReturned, uint256 fee)` | Repayment |
+| Vault | `Defaulted(address indexed caller)` | Default |
+| Vault | `FundingCancelled(address indexed caller)` | Funding failed |
+| Vault | `Deposit`, `Withdraw` (ERC-4626) | Lend, withdraw |
+| Receiver | `VerificationDelivered(bytes32 indexed invoiceId, bool valid, uint8 rejectCode)` | CRE report received |
+| Keeper | `VaultClosed(address indexed vault, Action action)` / `VaultCloseFailed(...)` | Per vault, per keeper run |
+| NFT | `Transfer` (ERC-721), `RendererSet(address)` | Mint, burn, renderer change |
+
+## Errors
+
+| Contract | Error | Cause |
+| --- | --- | --- |
+| Registry | `AlreadyRegistered(Status)` | Number is pending, funding, financed or closed as repaid/defaulted |
+| Registry | `SellerIsDefaulted()` | Wallet is flagged |
+| Registry | `SellerNotVerified()` | Wallet lacks KYB or PKP credential |
+| Registry | `NotPending()` | Verification already written |
+| Registry | `OnlyVault()` | Hook called by something other than the invoice's vault |
+| Registry | `InvalidParameters()` | Admin parameters would break the advance ≤ target invariant |
+| Vault | `NotFunding()`, `NotActive()` | Wrong state |
+| Vault | `FundingStillOpen()` | Cancel before the deadline |
+| Vault | `NotDefaultableYet()` | Default before due + grace |
+| Vault | `SharesNotTransferable()` | Share transfer attempted |
+| Vault | `ERC4626ExceededMaxDeposit` | Not KYC'd, over the remaining target, or funding closed |
+| NFT | `TransferDisabled()` | NFT transfer attempted |
+| Factory | `OnlyRegistry()`, `RegistryAlreadySet()` | Wiring |
+| Receiver / Keeper | `OnlyForwarder()` | Report not from the Chainlink forwarder |
+| Keeper | `InsufficientGas()` | Not enough gas for even one close |

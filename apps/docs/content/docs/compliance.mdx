@@ -1,0 +1,31 @@
+---
+title: Regulation and compliance
+description: The Indonesian rules Fakturin was designed around, and what a production version would still need.
+---
+
+<Callout type="warn" title="Not legal advice">
+  This page explains design choices. A production launch needs licensing and legal review in Indonesia.
+</Callout>
+
+## Rules the design follows
+
+| Topic | Rule | How Fakturin responds |
+| --- | --- | --- |
+| P2P lending (LPBBTI) | POJK 40/2024 regulates platforms that match lenders and borrowers; art. 158 forbids automatic allocation of lender funds | One vault per invoice; every lender chooses each invoice. No pool. |
+| Cost cap | OJK caps the all-in economic benefit of productive financing at 0.067% per day in 2026 | 1.5% per 30 days = 0.05% per day, fee included. |
+| Tax invoices | Since 1 January 2025 every Faktur Pajak is issued in Coretax with a national number | The number is the registry key; validity comes from the tax system. |
+| Machine access to Coretax | Only through a PJAP host-to-host API (PER-03/PJ/2022) | The CRE workflow calls a PJAP endpoint; simulated until staging access. |
+| Identity | Lenders need KYC; borrowers are businesses (KYB) | Chainlink ACE credentials from a single authorized issuer; no personal data onchain. |
+| Data protection | UU PDP (Law 27/2022) | Only hashes, amounts and dates onchain. Names and NPWPs stay offchain. |
+
+## Production gaps
+
+| Area | Needed |
+| --- | --- |
+| Operator | OJK licence as an LPBBTI operator, or partnership with one |
+| Data | PJAP agreement and staging/production access |
+| Identity | Licensed e-KYC/KYB provider as the ACE issuer; credential expiry and renewal |
+| Rupiah | A regulated rupiah stablecoin on Arbitrum, or an offchain settlement rail |
+| Chainlink | CRE DON deployment agreement; ACE commercial licence (BUSL-1.1) or the ACE Platform |
+| Legal | Recourse agreements with sellers; analysis of whether vault shares are securities |
+| Security | External audit of the Fakturin contracts |

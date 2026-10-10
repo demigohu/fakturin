@@ -1,0 +1,56 @@
+---
+title: Test and deploy contracts
+description: Foundry test suite, the one-command deploy with Arbiscan verification, and wiring the new addresses.
+---
+
+## Test
+
+```bash
+cd apps/contracts-solidity
+forge test            # 37 tests: every user story, rejection paths, ACE, pricing, renderer, keeper
+forge test -vvv --match-test Default
+```
+
+`foundry.toml` enables `via_ir` (required by the ACE contracts) and remaps `@openzeppelin/contracts`, `@openzeppelin/contracts-upgradeable`, `@chainlink/policy-management` and `@chainlink/cross-chain-identity`.
+
+## Deploy and verify
+
+```bash
+cp .env.example .env
+# PRIVATE_KEY        deployer with Arbitrum Sepolia ETH
+# ARBISCAN_API_KEY   Etherscan V2 key
+# Optional: MOCK_IDRX (reuse a token), CRE_FORWARDER, RELAYER, TREASURY
+./scripts/deploy-and-verify.sh          # --resume if it was interrupted
+```
+
+`script/DeployFaktur.s.sol` deploys and wires everything in one broadcast:
+
+<Steps>
+<Step>
+MockIDRX (unless `MOCK_IDRX` is set), FakturNFT, FakturVaultFactory, FakturRegistry, FakturRenderer.
+</Step>
+<Step>
+Chainlink ACE via `AceDeployer`: PolicyEngine, OnlyAuthorizedSenderPolicy (issuer = `RELAYER`), IdentityRegistry, CredentialRegistry, funder and seller validators, all behind ERC1967 proxies.
+</Step>
+<Step>
+FakturVerifierReceiver and FakturKeeper bound to `CRE_FORWARDER` (default: the CRE simulation forwarder).
+</Step>
+<Step>
+Roles: `REGISTRY_ROLE` on the NFT to the registry, `VERIFIER_ROLE` to the receiver and the relayer; `setIdentity`, `setRenderer`, factory `setRegistry`.
+</Step>
+</Steps>
+
+## After a deploy
+
+Copy the addresses from the log (or `broadcast/DeployFaktur.s.sol/421614/run-latest.json`) to:
+
+| File | Keys |
+| --- | --- |
+| `apps/web/.env` | `NEXT_PUBLIC_FAKTUR_*`, `NEXT_PUBLIC_MOCK_IDRX_ADDRESS`, `NEXT_PUBLIC_ACE_*`, `NEXT_PUBLIC_DEPLOY_BLOCK` |
+| `apps/fakturin-cre/verify/config.json` | `registryAddress`, `receiverAddress` |
+| `apps/fakturin-cre/keeper/config.json` | `keeperAddress` |
+| `apps/docs/lib/deployment.ts` | the table on [Deployed addresses](/docs/reference/deployments) |
+
+`NEXT_PUBLIC_DEPLOY_BLOCK` must be the **L2** block of the first deploy transaction.
+
+If contract interfaces changed, regenerate the ABIs in `packages/abis` from `out/`.

@@ -1,0 +1,42 @@
+---
+title: Check an invoice
+description: Look up any Faktur Pajak number to see whether it was verified, is being funded, or was ever financed. No wallet needed.
+---
+
+<Figure
+  src="/illustrations/cek.webp"
+  scene
+  alt="A magnifier over an invoice"
+  caption="The neighbour test: before I fund it, I can see that this Faktur Pajak is real, was submitted by the business that issued it, and is not financed by someone else."
+/>
+
+## How to use it
+
+Open **Check** and type a Faktur Pajak number. Any format works: dots, dashes, spaces and replacement suffixes are ignored, so `040.026-00012.34567` and `04002600012345` find the same invoice.
+
+The page computes the invoice ID locally, `keccak256("FP:" + digits)`, and reads it from `FakturRegistry`. Nothing is sent to a Fakturin server.
+
+## Reading the result
+
+| Status | Verdict |
+| --- | --- |
+| Never submitted | Never financed on Fakturin. |
+| Checking | Chainlink is checking it with the tax office right now. |
+| Rejected | Not verified, with the reason. May be submitted again. |
+| Raising funds | Verified, raising funds now. Not financed yet. |
+| Financed | Already financed. Nobody else can finance this Faktur Pajak. |
+| Repaid | Financed once and fully repaid. It can never be financed again. |
+| Defaulted | Financed once and not repaid. It can never be financed again. |
+| Funding failed | Funding did not fill in time and lenders were refunded. May be submitted again. |
+
+Under the verdict you see:
+
+- **Funding progress** while it is raising funds.
+- The **invoice NFT**, drawn onchain, with its current stamp. After the invoice closes the NFT is burned, but the picture stays with the final LUNAS or DEFAULT stamp.
+- **Facts from the chain**: amount, due date and whether the seller wallet has defaulted before.
+- **Tax-office data** (simulated PJAP): seller and buyer names and the masked NPWP.
+- **Onchain details**: invoice ID, seller wallet, vault address.
+
+<Callout title="What is onchain">
+  The registry stores only the invoice ID, hashes of the NPWPs, the amount and the dates. Business names come from the tax office API, not from the chain.
+</Callout>

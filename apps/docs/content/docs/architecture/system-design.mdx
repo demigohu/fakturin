@@ -1,0 +1,101 @@
+---
+title: System design
+description: The design decisions behind Fakturin, the alternatives considered, and how the system would scale beyond the demo.
+---
+
+## Design goals
+
+1. **One invoice, one financing.** Double financing must be impossible, not merely detectable.
+2. **Only the issuer can borrow.** Knowing an invoice number must not be enough.
+3. **No trusted operator for money.** Funds move only by contract rules; no admin can take them.
+4. **Plain for non-crypto users.** Few signatures, exact approvals, every step explained.
+5. **Swap simulations for real providers without touching contracts.**
+
+## Key decisions
+
+<Accordions>
+<Accordion title="Registry keyed by the national Faktur Pajak number">
+Since Coretax (January 2025) every Faktur Pajak has a unique national number recorded by the tax office. Keying the registry by `keccak256("FP:" + normalized number)` makes the tax office's numbering the uniqueness guarantee. Alternative considered: a hash of the PDF or of invoice fields; rejected because it changes with formatting and can be gamed.
+</Accordion>
+<Accordion title="One ERC-4626 vault per invoice instead of a pool">
+A pool would let the platform allocate money automatically, which POJK 40/2024 (art. 158) forbids for P2P lenders, and would mix the risk of every invoice. Per-invoice vaults keep lender choice explicit, isolate defaults, and give pro-rata accounting for free. Cost: one contract deployment per verified invoice (paid by the verifier's transaction).
+</Accordion>
+<Accordion title="All-or-nothing funding with an atomic payout">
+The seller needs the whole advance, not a trickle. The deposit that reaches the target pays the seller in the same transaction, so there is never a state where the vault is full but the seller is unpaid. If the target is not reached in 3 days, everyone is refunded 1:1.
+</Accordion>
+<Accordion title="Silent factoring with a holdback">
+Indonesian buyers rarely accept redirecting payment to a third party, and notifying them can hurt the seller's relationship. Fakturin keeps the buyer out of the app; the seller repays. Lenders are protected by a holdback (target minus 80% advance), a public default flag, and limits per seller and per buyer NPWP.
+</Accordion>
+<Accordion title="Price by time, fee only on repayment">
+A fixed discount would overcharge short invoices and undercharge long ones. Pricing per second of tenor keeps the cost proportional and below the OJK daily cap. Taking the platform fee only on repayment aligns the platform with lenders: it earns nothing from defaults.
+</Accordion>
+<Accordion title="Chainlink ACE instead of a custom allow-list or ERC-3643">
+Identity is a credential about a wallet, not a property of Fakturin. ACE's Cross-Chain Identity gives a standard CCID, typed credentials with data (the NPWP hash), a policy-protected issuer and validators the contracts can call. ERC-3643 was considered; ACE covers the same identity registry role and adds the policy engine and cross-chain identity. The core is self-deployed (BUSL-1.1, non-production) because the managed ACE Platform is in private beta.
+</Accordion>
+<Accordion title="Chainlink CRE for verification and closing, with a relayer fallback">
+The registry must not trust the seller or Fakturin's server about the tax office. A CRE workflow fetches PJAP data on several nodes, reaches consensus and delivers a signed report through Chainlink's forwarder. Until DON deployment is available, `cre workflow simulate --broadcast` runs the same workflow, and the app keeps an equivalent relayer for instant demos.
+</Accordion>
+<Accordion title="Burn the NFT on close, keep the picture">
+A live token should mean a live claim. Burning on close keeps wallets and explorers honest, while `FakturRenderer.svg` still draws the final LUNAS or DEFAULT stamp from the registry for history.
+</Accordion>
+<Accordion title="Non-upgradeable Fakturin contracts">
+Vault terms are immutable and no admin function touches funds. Parameter changes affect only future invoices. Upgrading means deploying a new set and pointing the app at it.
+</Accordion>
+</Accordions>
+
+## Data model
+
+<Mermaid
+  chart={`
+classDiagram
+  class Invoice {
+    address seller
+    address vault
+    bytes32 buyerNpwpHash
+    uint256 nominal
+    uint64 issuedAt
+    uint64 dueDate
+    uint64 requestedAt
+    Status status
+    uint8 rejectCode
+  }
+  class FakturRegistry {
+    mapping invoiceId → Invoice
+    mapping invoiceId → fakturNumber
+    mapping vault → invoiceId
+    mapping seller → sellerDefaulted
+    mapping seller → sellerOutstanding
+    mapping buyerNpwpHash → buyerOutstanding
+    quote(nominal, dueDate) Quote
+  }
+  class FakturVault {
+    immutable invoiceId, seller, nominal
+    immutable target, advance, holdback, fee
+    immutable fundingDeadline, dueDate, gracePeriod
+    State state
+  }
+  FakturRegistry "1" --> "*" Invoice
+  Invoice "1" --> "0..1" FakturVault
+`}
+/>
+
+Onchain: IDs, hashes, amounts, dates, status. Offchain (tax office, issuer): names, NPWPs, documents.
+
+## Scaling beyond the demo
+
+| Concern | Demo | At scale |
+| --- | --- | --- |
+| Reading lists | Event scan from the deploy block in the browser | An indexer (The Graph, Ponder) or a small API cache |
+| Keeper scan | `closable()` loops over every vault | Keep a queue of open vaults, or index deadlines offchain and pass exact addresses in the report |
+| Vault deployment | Full contract per invoice | ERC-1167 minimal proxies to cut deployment gas |
+| Verification | Relayer or CRE simulation | CRE on the Chainlink DON with a real PJAP |
+| Identity issuing | Server route with one key | Licensed KYC/KYB provider as ACE issuer, credential expiry and revocation |
+| Token | MockIDRX | IDRX or another rupiah stablecoin once on Arbitrum |
+| Keys | One relayer key for verifier, keeper and issuer | Separate keys or no keys: CRE for verifier and keeper, the provider for identity |
+
+## Consistency and failure
+
+- **At-most-once verification.** `fulfillVerification` only acts on `Pending` invoices, so a duplicate report (relayer and CRE both answering) is rejected with `NotPending`.
+- **Missed events.** The CRE listener starts at the current block; an invoice submitted while it was down stays `Pending` and can be replayed with `--evm-tx-hash`. In relayer mode the app re-posts the request.
+- **Keeper races.** Every close re-checks state and deadlines; a vault closed by someone else just emits `VaultCloseFailed` and the loop continues.
+- **Chain reorgs.** Arbitrum confirms in seconds; the app waits for receipts before moving on.

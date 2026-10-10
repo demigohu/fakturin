@@ -1,0 +1,65 @@
+---
+title: Try the demo
+description: Five minutes from an empty wallet to a financed and repaid invoice on Arbitrum Sepolia.
+---
+
+You need a browser wallet (MetaMask, OKX Wallet, Rabby or any WalletConnect wallet) and a little **Arbitrum Sepolia ETH** for gas. Everything else is free test money.
+
+<Callout type="warn" title="Test network only">
+  Fakturin runs on Arbitrum Sepolia with MockIDRX, a test token. Nothing here is real money, and the tax-office data is simulated.
+</Callout>
+
+<Steps>
+<Step>
+
+### Get gas
+
+Add Arbitrum Sepolia (chain ID `421614`) to your wallet; the app offers to switch for you when you connect. Get a little ETH from an Arbitrum Sepolia faucet, or bridge Sepolia ETH. One borrower-plus-lender run costs well under 0.001 ETH.
+
+</Step>
+<Step>
+
+### Get test rupiah
+
+Open the app, connect, and press **Get test MockIDRX**. The faucet sends Rp1,000,000,000 of MockIDRX to your wallet. Anyone can call it; it is test money.
+
+</Step>
+<Step>
+
+### Borrow against an invoice
+
+Go to **Borrow** and follow the [borrower guide](/docs/guides/borrower): sign once to verify your business, pick one of your Faktur Pajak, submit. Chainlink checks it with the (simulated) tax office in a few seconds and opens a vault.
+
+</Step>
+<Step>
+
+### Fund it from a second wallet
+
+Switch to another account, get MockIDRX, go to **Lend** and follow the [lender guide](/docs/guides/lender): sign once for KYC, then lend to the invoice you just opened. When the vault is full the borrower receives 80% in the same transaction.
+
+</Step>
+<Step>
+
+### Repay and withdraw
+
+Back on the borrower wallet, press **Repay**. Then on the lender wallet, **Withdraw with your return**. Look the number up on **Check**: the invoice NFT now carries a LUNAS stamp.
+
+</Step>
+</Steps>
+
+## Demo shortcuts
+
+The simulated tax office recognises a few special endings on a Faktur Pajak number, so you can see every path without waiting days.
+
+| Number ends in | Result |
+| --- | --- |
+| `…7777` | Valid, but **due in 2 minutes**. Leave it unpaid and the keeper closes it as defaulted, with no button. |
+| `…9999` | Cancelled at the tax office. Rejected. |
+| `…8888` | Replaced by a newer Faktur Pajak. Rejected. |
+| `…0000` | Not found. Rejected. |
+| An invoice listed under **another** wallet | Valid, but the NPWP is not yours. Rejected with `SELLER_MISMATCH`. |
+
+<Cards>
+  <Card title="Borrower guide" href="/docs/guides/borrower" description="Every step, every cost, what happens if you do not repay." />
+  <Card title="Lender guide" href="/docs/guides/lender" description="Where the return comes from and what you risk." />
+</Cards>

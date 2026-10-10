@@ -1,0 +1,109 @@
+---
+title: System overview
+description: The pieces of Fakturin, where each one runs, and how they talk to each other.
+---
+
+Fakturin has four layers: a **web app** for people, **automation** that talks to the outside world (Chainlink CRE, with a relayer fallback), **contracts** on Arbitrum Sepolia that hold the rules and the money, and **outside systems** (tax office, identity provider) that are simulated in this demo.
+
+## Context
+
+<Mermaid
+  caption="Who and what Fakturin talks to"
+  chart={`
+flowchart TB
+  Seller([Borrower / seller PKP])
+  Lender([Lender / funder])
+  Public([Anyone])
+  Buyer([Buyer, offchain])
+  subgraph Fakturin
+    App[Web app<br/>Next.js]
+    Auto[Automation<br/>Chainlink CRE / relayer]
+    Chain[(Contracts<br/>Arbitrum Sepolia)]
+  end
+  PJAP[[PJAP / Coretax<br/>simulated]]
+  KYC[[KYC / KYB provider<br/>simulated]]
+  Seller -- borrow, repay --> App
+  Lender -- lend, withdraw --> App
+  Public -- check --> App
+  Buyer -. pays invoice .-> Seller
+  App --> Chain
+  App --> KYC
+  Auto --> PJAP
+  Auto --> Chain
+  KYC --> Chain
+`}
+/>
+
+## Containers
+
+<Mermaid
+  caption="Runtime components"
+  chart={`
+flowchart TB
+  subgraph Browser
+    UI[Pages<br/>/ · /borrow · /lend · /check]
+    W[Wallet<br/>Reown AppKit + wagmi]
+  end
+  subgraph Next[Next.js server · apps/web]
+    PJ[PJAP mock<br/>/api/pjap/*]
+    ID[ACE issuer mock<br/>/api/identity]
+    RL[Relayer, relayer mode only<br/>/api/verify · /api/keeper]
+  end
+  subgraph VPS[VPS · pm2 · apps/fakturin-cre]
+    CV[verify workflow<br/>simulate --listen]
+    CK[keeper workflow<br/>every 60 s]
+  end
+  subgraph Arb[Arbitrum Sepolia]
+    FWD[Chainlink forwarder]
+    CORE[Fakturin contracts<br/>registry, vaults, NFT, keeper]
+    ACE[Chainlink ACE<br/>identity + credentials]
+  end
+  UI --> W
+  UI --> PJ & ID & RL
+  W -- transactions --> CORE
+  ID --> ACE
+  RL --> CORE
+  CV -- HTTP --> PJ
+  CV & CK -- reports --> FWD --> CORE
+  CORE -- isFunder / isSeller --> ACE
+`}
+/>
+
+## Contract dependencies
+
+<Mermaid
+  chart={`
+flowchart TB
+  RCV[FakturVerifierReceiver] -- fulfillVerification --> REG[FakturRegistry]
+  KEEP[FakturKeeper] -- cancelFunding / markDefault --> VAULT
+  REG -- create --> FAC[FakturVaultFactory]
+  FAC -- deploys --> VAULT[FakturVault × N]
+  VAULT -- status hooks, isFunder --> REG
+  VAULT -- holds --> TOKEN[MockIDRX]
+  REG -- mint / burn --> NFT[FakturNFT]
+  NFT -- tokenURI --> REN[FakturRenderer]
+  REG -- isSeller, isFunder, NPWP hash --> ACE[Chainlink ACE<br/>registries + validators + PolicyEngine]
+`}
+/>
+
+| Contract | Holds money? | Upgradeable? | Owner powers |
+| --- | --- | --- | --- |
+| FakturRegistry | No | No | Parameters, identity addresses, treasury, roles |
+| FakturVault (one per invoice) | Yes, per invoice | No | None. Terms are immutable. |
+| FakturVaultFactory | No | No | None (registry set once) |
+| FakturNFT | No | No | Renderer swap |
+| FakturRenderer | No | No | None |
+| FakturVerifierReceiver | No | No | None (forwarder fixed) |
+| FakturKeeper | No | No | None (forwarder fixed) |
+| ACE contracts | No | Yes (ERC1967 proxies) | Policies, issuer, validator requirements |
+
+## Read path
+
+The app reads state directly from the chain with `wagmi`/`viem`: lists are rebuilt from registry and vault events from the deploy block (`317643441`, the L2 block of the first deploy transaction), details come from view calls (`getInvoice`, `quote`, `totalAssets`, `svg`). There is no indexer or database. See [System design](/docs/architecture/system-design) for the tradeoffs.
+
+<Cards>
+  <Card title="Sequence diagrams" href="/docs/architecture/flows" />
+  <Card title="Money flow" href="/docs/architecture/money-flow" />
+  <Card title="System design" href="/docs/architecture/system-design" />
+  <Card title="Security and trust" href="/docs/architecture/security" />
+</Cards>

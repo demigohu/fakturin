@@ -1,0 +1,130 @@
+---
+title: Borrower guide
+description: For businesses (PKP) that want to be paid today for a Faktur Pajak their buyer pays later.
+---
+
+<Figure
+  src="/illustrations/penjual.webp"
+  scene
+  alt="A seller with a parcel"
+  caption="Example: CV Rina Kemasan Mandiri issued a Rp100,000,000 Faktur Pajak to a buyer that pays in 60 days. With Fakturin, CV Rina receives Rp80,000,000 as soon as lenders fill the vault, and repays Rp100,000,000 on the due date, getting Rp17,000,000 back."
+/>
+
+## Before you start
+
+- You are a **PKP** (VAT-registered business) and your invoice is a Faktur Pajak in Coretax.
+- Your buyer will pay you on a known due date, at most **180 days** from today.
+- You have a wallet with a little Arbitrum Sepolia ETH. See [Try the demo](/docs/getting-started).
+
+## Step by step
+
+<Steps>
+<Step>
+
+### Verify your business (once)
+
+On **Borrow**, press **Verify your business**. The app shows the business linked to your wallet in the (simulated) PJAP account: name, masked NPWP and PKP status. You then **sign a message** proving the wallet is yours. Signing is free: no transaction, no gas.
+
+The credential issuer writes three records to Chainlink ACE:
+
+- a **CCID** (cross-chain identity) for your wallet,
+- a `common.kyb` credential (verified business),
+- an `id.fakturin.pkp` credential whose data is the **hash** of your NPWP. The NPWP itself never goes onchain.
+
+</Step>
+<Step>
+
+### Pick a Faktur Pajak
+
+The app lists the Faktur Pajak issued under your NPWP (simulated Coretax). Pick one, or type a number. Before you submit, you see the full price for this invoice: your cost, what you get now, what is held back and when you repay. See [Pricing](/docs/concepts/pricing).
+
+</Step>
+<Step>
+
+### Submit (one transaction)
+
+Press **Submit**. Your wallet asks you to confirm one transaction, `requestVerification(fakturNumber)`. It costs only gas; no token approval is needed. The invoice is now **Checking**.
+
+</Step>
+<Step>
+
+### Chainlink checks it with the tax office
+
+The verifier (Chainlink CRE, or the demo relayer) reads the request, asks PJAP about the Faktur Pajak, and writes the answer back. Within seconds your invoice is either:
+
+- **Raising funds**: valid and the NPWP matches yours. A vault is created and the invoice NFT is minted into it, stamped VERIFIED.
+- **Rejected**, with the reason: not found, cancelled, replaced, not your NPWP, already due, tenor over 180 days, or over a limit. See [reject codes](/docs/reference/parameters#reject-codes). A rejected number can be submitted again later.
+
+</Step>
+<Step>
+
+### Get paid
+
+Lenders fill the vault. The deposit that reaches the target **sends you 80% of the invoice in the same transaction**. There is nothing to claim. Your invoice is now **Financed** and the page shows your repay date.
+
+If the vault is not full within **3 days**, it is closed automatically, lenders get their money back, and you may submit the number again.
+
+</Step>
+<Step>
+
+### Repay on the due date
+
+When your buyer pays you, press **Repay**. Two wallet prompts:
+
+1. **Approve** the vault to take exactly the invoice amount in MockIDRX (not unlimited).
+2. **Repay**: the vault takes the full invoice amount and immediately sends your **holdback** back to you.
+
+The invoice closes as **Repaid**, the NFT is burned and its picture keeps a LUNAS stamp.
+
+</Step>
+</Steps>
+
+## What it costs
+
+You pay **1.5% of the invoice per 30 days** until the due date, all-in, priced by the second. Nothing else: no admin fee, no fee if lenders do not fill the vault.
+
+| Rp100,000,000 invoice, due in 60 days | Amount |
+| --- | --- |
+| Your cost (1.5% × 60/30) | Rp3,000,000 |
+| Paid to you when the vault is full (80%) | Rp80,000,000 |
+| Held back in the vault | Rp17,000,000 |
+| You repay on the due date | Rp100,000,000 |
+| Returned to you on repayment | Rp17,000,000 |
+| **Net**: received 97M, paid 100M | **Rp3,000,000** |
+
+The platform's share (10% of your cost) is taken out of the lenders' side on repayment, not added on top. Try other amounts in the [pricing calculator](/docs/concepts/pricing).
+
+## If you do not repay
+
+Fakturin is **silent factoring with recourse**: your buyer is not told, and you stay responsible for repaying.
+
+- After the due date plus a grace period (60 seconds in the demo, days in production), the keeper closes the vault as **Defaulted**. Nobody has to press a button.
+- The **holdback stays in the vault** and goes to the lenders. You lose it.
+- Your wallet is **flagged as defaulted** onchain. You can never submit another invoice, and anyone can see the flag on [Check](/docs/guides/check).
+- The Faktur Pajak number can never be financed again.
+
+## Limits
+
+| Limit | Demo value |
+| --- | --- |
+| Open financing per seller | Rp200,000,000 |
+| Open financing per buyer NPWP (across all sellers) | Rp500,000,000 |
+| Longest tenor | 180 days |
+| Funding window | 3 days |
+
+Limits count invoices that are raising funds or financed, and free up when they close.
+
+<Accordions>
+<Accordion title="Can someone else submit my invoice?">
+They can try, but the verification result carries the hash of the NPWP printed on the Faktur Pajak. If it is not the NPWP in their wallet's PKP credential, the invoice is rejected with `SELLER_MISMATCH`.
+</Accordion>
+<Accordion title="Can I finance the same invoice with another lender too?">
+Not on Fakturin: one number, one financing, forever. Outside Fakturin, anyone can look the number up on Check before lending.
+</Accordion>
+<Accordion title="Why do I get 80% and not 97%?">
+The 17% holdback protects lenders if you do not repay. You get it back the moment you repay, so your real cost is only the 3%.
+</Accordion>
+<Accordion title="Where does the NFT go? It is not in my wallet.">
+The invoice NFT is minted into the invoice's own vault and cannot be transferred. That is what makes double financing impossible. You can see it on the Borrow page and on Check.
+</Accordion>
+</Accordions>

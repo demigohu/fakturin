@@ -1,0 +1,36 @@
+---
+title: Glossary
+description: Indonesian tax terms, Fakturin terms and Chainlink terms used across these docs.
+---
+
+| Term | Meaning |
+| --- | --- |
+| **Faktur Pajak** | Indonesian VAT invoice, issued in Coretax with a unique national number. |
+| **Coretax** | The tax office's (DJP) core tax system since 2025. |
+| **DJP** | Direktorat Jenderal Pajak, the Indonesian tax office. |
+| **PJAP** | Penyedia Jasa Aplikasi Perpajakan, a licensed tax application provider with host-to-host access to DJP. |
+| **NPWP** | Taxpayer identification number of a person or business. |
+| **PKP** | Pengusaha Kena Pajak, a VAT-registered business. Only PKPs issue Faktur Pajak. |
+| **DPP / PPN** | Tax base / value-added tax (11%) on a Faktur Pajak. |
+| **OJK** | Otoritas Jasa Keuangan, Indonesia's financial services authority. |
+| **POJK 40/2024** | OJK regulation on P2P lending platforms (LPBBTI). |
+| **LUNAS** | "Paid in full". Stamp on a repaid invoice NFT. |
+| **IDRX / MockIDRX** | A rupiah stablecoin (2 decimals) / its test copy used here. |
+| **Nominal (N)** | The invoice amount. |
+| **Tenor** | Time from verification to the due date. |
+| **Discount** | The seller's cost: N × 1.5% × tenor / 30 days. |
+| **Target** | N − discount: what lenders put in together. |
+| **Advance** | 80% of N, paid to the seller when the vault is full. |
+| **Holdback** | Target − advance, kept in the vault until the invoice closes. |
+| **Platform fee** | 10% of the discount, paid to the treasury on repayment only. |
+| **Grace period** | Time after the due date before a vault can be defaulted. |
+| **Silent factoring** | Invoice financing in which the buyer is not notified and keeps paying the seller. |
+| **Recourse** | The seller stays liable if the invoice is not paid. |
+| **ERC-4626** | Standard tokenized vault: deposits mint shares, shares redeem for a part of the assets. |
+| **Chainlink CRE** | Chainlink Runtime Environment: workflows that run on Chainlink nodes and write consensus results onchain. |
+| **Forwarder** | The Chainlink contract that delivers CRE reports to consumer contracts. |
+| **Chainlink ACE** | Automated Compliance Engine: policy engine and cross-chain identity. |
+| **CCID** | Cross-chain identity: one ID per person or business, linked to wallets. |
+| **Credential** | A typed claim about a CCID (`common.kyc`, `common.kyb`, `id.fakturin.pkp`). |
+| **Keeper** | Automation that closes vaults whose deadline passed. |
+| **Relayer** | The app's server routes that do the verifier and keeper jobs when CRE is not running. |

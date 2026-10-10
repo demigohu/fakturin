@@ -1,0 +1,68 @@
+---
+title: Run Chainlink CRE
+description: Run the verify and keeper workflows with cre workflow simulate, on a laptop or on a VPS with pm2.
+---
+
+Chainlink lets anyone **simulate** CRE workflows. With `--broadcast`, a simulation sends real transactions through Chainlink's simulation forwarder (`0xD41263567DdfeAd91504199b8c6c87371e83ca5d`), which `FakturVerifierReceiver` and `FakturKeeper` accept. Deploying workflows to the Chainlink DON is a commercial agreement and is not needed for the demo.
+
+| Workflow | Trigger | Runner |
+| --- | --- | --- |
+| `verify/` | EVM log `VerificationRequested` | `scripts/verify-listen.sh`: `simulate verify --listen --broadcast`, always on |
+| `keeper/` | Cron | `scripts/keeper-loop.sh`: one simulation every `KEEPER_INTERVAL` seconds (cron triggers cannot `--listen`) |
+
+## Install once
+
+```bash
+# CRE CLI 1.38+: https://docs.chain.link/cre
+curl -fsSL https://bun.sh/install | bash
+npm i -g pm2            # VPS only
+cre login               # or CRE_API_KEY in .env
+
+cd apps/fakturin-cre
+(cd verify && bun install) && (cd keeper && bun install)
+cp .env.example .env    # CRE_ETH_PRIVATE_KEY, CRE_TARGET=staging-settings
+```
+
+Set `verify/config.json` → `pjapBaseUrl` to the **public URL** of the web app's PJAP route, e.g. `https://fakturin.example.com/api/pjap/faktur`. `http://localhost:3000/...` only works when the web app runs on the same machine.
+
+<Tabs items={["Laptop", "VPS with pm2"]}>
+<Tab value="Laptop">
+
+Two terminals, no pm2 needed:
+
+```bash
+cd apps/fakturin-cre
+./scripts/verify-listen.sh
+```
+
+```bash
+cd apps/fakturin-cre
+./scripts/keeper-loop.sh
+```
+
+</Tab>
+<Tab value="VPS with pm2">
+
+```bash
+cd apps/fakturin-cre
+pm2 start ecosystem.config.cjs
+pm2 save && pm2 startup
+pm2 logs fakturin-cre-verify   # "VerificationRequested … PJAP result … Verification written: 0x…"
+pm2 logs fakturin-cre-keeper   # "No overdue vaults" or "Closing 1 vault(s) … Keeper report written"
+```
+
+</Tab>
+</Tabs>
+
+Then switch the web app: `NEXT_PUBLIC_VERIFIER=cre` in `apps/web/.env`, and restart it. The app stops using its relayer for these two jobs and waits for CRE.
+
+## Notes
+
+- **Missed requests.** The listener starts at the current block. Process an invoice submitted while it was down by hand:
+  ```bash
+  cre workflow simulate verify --broadcast --non-interactive --trigger-index 0 \
+    --evm-tx-hash 0x<submit tx> --evm-event-index 0
+  ```
+- **"Scanning" logs** from the listener are normal: it polls for new logs on every block.
+- **macOS bash 3.2.** The scripts are compatible with the system bash.
+- **Local fork.** `CRE_ENV_FILE=.env.local-fork CRE_TARGET=local-settings ./scripts/verify-listen.sh` with addresses in `verify/config.local.json` and `keeper/config.local.json` (both gitignored; CRE limits config paths to 97 characters, so they live inside the workflow folders).

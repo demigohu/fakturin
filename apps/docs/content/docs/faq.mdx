@@ -1,0 +1,40 @@
+---
+title: FAQ
+description: Short answers to the questions people ask most.
+---
+
+<Accordions>
+<Accordion title="Is this real money?">
+No. Fakturin runs on Arbitrum Sepolia with MockIDRX, a test token anyone can mint from the faucet.
+</Accordion>
+<Accordion title="Is this a loan or a sale of the invoice?">
+Economically it is invoice financing with recourse: lenders advance money against the invoice and the seller repays it. The buyer is not involved (silent factoring).
+</Accordion>
+<Accordion title="Why does the buyer not pay the vault directly?">
+Asking buyers to redirect payment is rare in Indonesia and can hurt the seller's relationship. The seller repays instead; the holdback, the default flag and limits protect lenders.
+</Accordion>
+<Accordion title="Where does the lenders' return come from?">
+From the seller's cost: the seller receives 97% of the invoice value (80% now, 17% later) and repays 100%. The 3% difference goes to lenders, minus a 10% platform fee. See Pricing.
+</Accordion>
+<Accordion title="Is the 1.5% per 30 days fixed?">
+It is a registry parameter. It applies per second of tenor, so a 30-day invoice costs 1.5%, a 90-day one 4.5%. The admin can change it for future invoices within the OJK cap.
+</Accordion>
+<Accordion title="What happens if nobody funds my invoice?">
+After 3 days the vault is closed automatically, any deposits are refunded 1:1, and you may submit the number again. You pay nothing.
+</Accordion>
+<Accordion title="Can I repay early?">
+Yes, any time after funding. The price is fixed at verification, so repaying early does not lower the cost.
+</Accordion>
+<Accordion title="Why is the invoice NFT not in my wallet?">
+It is locked in the invoice's vault so the invoice cannot be pledged twice. The app shows it on Borrow, Lend and Check.
+</Accordion>
+<Accordion title="Why do I sign a message for KYC/KYB?">
+To prove you control the wallet before the issuer writes a credential for it. Signing is free and cannot move funds.
+</Accordion>
+<Accordion title="What is Chainlink doing here?">
+CRE checks each Faktur Pajak with the tax system and closes overdue vaults; ACE holds the identity credentials that decide who can borrow and lend.
+</Accordion>
+<Accordion title="Is the code audited?">
+No. It has a full Foundry test suite and has been tested end to end, but no external audit.
+</Accordion>
+</Accordions>

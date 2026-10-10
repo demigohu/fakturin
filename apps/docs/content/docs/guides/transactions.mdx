@@ -1,0 +1,35 @@
+---
+title: Reading a transaction
+description: What every wallet prompt in Fakturin does, in plain language, and how to check it before you sign.
+---
+
+Every action that touches the chain opens a **review dialog** first. It lists the steps in order, what each one does in plain words, the exact amounts, and the raw call data your wallet will receive. Nothing is sent until you press continue, and each step is confirmed in your wallet.
+
+## Kinds of steps
+
+| Step | Costs gas? | What it is |
+| --- | --- | --- |
+| **Sign a message** | No | Proves you control the wallet. Used once for KYC or KYB. It cannot move money. |
+| **Approve** | Yes | Allows one contract to take **exactly** the amount shown from your MockIDRX. Fakturin never asks for an unlimited approval. |
+| **Transaction** | Yes | Calls a contract function: submit, deposit, repay, withdraw. |
+| **Off-chain step** | No | The app's server or Chainlink does something for you (issue a credential, check the invoice). The dialog shows its result. |
+
+## Every action, step by step
+
+| Action | Steps |
+| --- | --- |
+| Get test MockIDRX | `MockIDRX.faucet(you)` |
+| Verify your business (KYB) | Sign → issuer writes CCID, `common.kyb`, `id.fakturin.pkp` |
+| Verify your identity (KYC) | Sign → issuer writes CCID, `common.kyc` |
+| Submit an invoice | `FakturRegistry.requestVerification(number)` → Chainlink verifies |
+| Lend | `MockIDRX.approve(vault, amount)` → `FakturVault.deposit(amount, you)` |
+| Repay | `MockIDRX.approve(vault, invoiceAmount)` → `FakturVault.repay()` |
+| Withdraw | `FakturVault.redeem(allShares, you, you)` |
+
+## Checking the call data
+
+The dialog shows the **raw call data** for each transaction: the 4-byte function selector followed by the encoded arguments. It should match what your wallet displays. For an approve, the last 32 bytes are the amount in token units; MockIDRX has 2 decimals, so Rp1,000,000 is `100000000` units (`0x5f5e100`).
+
+<Callout type="warn" title="Some wallets hide the amount">
+  Some wallets show an approve as "unlimited" or let you edit the amount. Fakturin always requests the exact amount; if your wallet shows something else, edit it back or reject.
+</Callout>

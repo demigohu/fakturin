@@ -1,0 +1,22 @@
+---
+title: Limitations and roadmap
+description: What the MVP does not do yet, and the planned next steps.
+---
+
+## Current limitations
+
+- **Simulated outside world.** PJAP data, the KYC/KYB issuer and the rupiah (MockIDRX) are simulated.
+- **CRE in simulation.** Workflows run with `cre workflow simulate --broadcast` on one machine, not on the Chainlink DON, so there is no multi-node consensus yet.
+- **One operator key** acts as relayer, ACE issuer and treasury in the demo.
+- **PKP sellers only.** Businesses without Faktur Pajak cannot use Fakturin.
+- **No secondary market.** Lenders wait until the invoice closes.
+- **Event scans in the browser.** Fine at demo scale; slow with thousands of invoices.
+- **Demo grace period** is 60 seconds.
+
+## Roadmap
+
+| Stage | Items |
+| --- | --- |
+| Next | PJAP staging access; CRE DON deployment; licensed KYC/KYB issuer; indexer for lists |
+| Then | IDRX (or another rupiah stablecoin) on Arbitrum; ERC-1167 vault clones; credential expiry and renewal; production grace period |
+| Later | Non-PKP sellers verified from accounting software through CRE; ERP integrations; ACE Platform for policy and reporting; buyer-acknowledged (non-silent) factoring as an option |

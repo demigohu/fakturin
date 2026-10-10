@@ -1,0 +1,56 @@
+---
+title: Pricing and fees
+description: How the seller's cost, the funding target, the advance, the holdback and the platform fee are computed, with a live calculator.
+---
+
+Fakturin prices an invoice by **time**. The seller pays 1.5% of the invoice for every 30 days between verification and the due date, computed by the second. That cost is the lenders' return, minus a 10% platform fee taken only when the invoice is repaid.
+
+## The formulas
+
+These are exactly `FakturRegistry.quote(nominal, dueDate)` and `FakturVault.repay()`:
+
+```text
+tenor     = dueDate − now                       (seconds)
+discount  = N × ratePer30dBps × tenor / (30 days × 10 000)
+target    = N − discount                        what lenders put in together
+advance   = N × advanceBps / 10 000             paid to the seller when the vault fills
+holdback  = target − advance                    stays in the vault until close
+fee       = discount × platformFeeBps / 10 000  to the treasury, on repayment only
+```
+
+| Parameter | Demo value |
+| --- | --- |
+| `ratePer30dBps` | 150 (1.5% per 30 days) |
+| `platformFeeBps` | 1000 (10% of the discount) |
+| `advanceBps` | 8000 (80% of the invoice) |
+| `maxTenor` | 180 days |
+
+## Try it
+
+<PricingCalculator />
+
+## Who gets what
+
+| Outcome | Seller | Lenders (together) | Treasury |
+| --- | --- | --- | --- |
+| Repaid | +advance now, −N later, +holdback back: **net cost = discount** | put in target, take out N − fee: **+discount − fee** | **fee** |
+| Defaulted | keeps the advance, loses the holdback, flagged forever | put in target, take out holdback: **−advance** | nothing |
+| Funding failed | nothing happens | refunded 1:1 | nothing |
+
+The platform only earns when lenders are repaid. Its incentive is the lenders' incentive.
+
+## Why the advance is always below the target
+
+`advance = 80% of N` and `target = N − discount`. With a 180-day maximum tenor the discount is at most 9% of N, so the target is at least 91% of N and the holdback at least 11% of N. A longer tenor would be rejected (`REJECT_TENOR`), and the admin cannot set parameters for which the advance would exceed the target (`setParameters` reverts with `InvalidParameters`).
+
+## The OJK cap
+
+Indonesia's financial regulator caps the all-in economic benefit of productive P2P financing at **0.067% per day** in 2026 (about 2% per 30 days). Fakturin's 1.5% per 30 days is 0.05% per day, all-in, with the platform fee included.
+
+<Callout type="warn">
+  Check the current OJK figure before any production use. The cap steps down over time.
+</Callout>
+
+## Units
+
+MockIDRX (like IDRX) has **2 decimals**: one rupiah is 100 token units. A Rp100,000,000 invoice is `10 000 000 000` units onchain. All amounts in the registry and vaults are token units; the app divides by 100 for display.

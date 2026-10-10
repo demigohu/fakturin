@@ -1,0 +1,54 @@
+---
+title: Automatic closing (keeper)
+description: Why nobody presses "default" or "cancel" in Fakturin, and how the FakturKeeper contract and a Chainlink CRE cron close overdue vaults.
+---
+
+Two things must happen on time without anyone wanting to do them: cancel a vault whose funding window ended unfilled, and default a vault whose seller did not repay. Lenders should not have to press "Mark default" against a business. `FakturKeeper` plus a cron workflow do it.
+
+## The contract
+
+| Function | Who | What |
+| --- | --- | --- |
+| `actionFor(vault)` | view | `CancelFunding`, `MarkDefault` or `None`, from the vault's state and deadlines |
+| `closable(max)` | view | Up to `max` vaults that can be closed now (scans the factory's vault list) |
+| `onReport(meta, report)` | Chainlink forwarder only | Closes the vaults in `abi.decode(report, (address[]))` |
+| `closeDue(max)` | anyone | Permissionless fallback: closes up to `max` due vaults |
+
+Each close runs in `try/catch` with a fixed gas budget (`CLOSE_GAS = 250 000`), so one vault that was already closed by somebody else never blocks the rest. If the remaining gas cannot cover another close, the loop stops; if it cannot cover even one, the call reverts with `InsufficientGas` instead of silently doing nothing.
+
+## The cron
+
+<Mermaid
+  chart={`
+sequenceDiagram
+  autonumber
+  participant Cron as CRE keeper workflow (cron)
+  participant K as FakturKeeper
+  participant F as Chainlink forwarder
+  participant V as FakturVault
+  participant R as FakturRegistry
+  loop every run
+    Cron->>K: closable(10) (read)
+    alt list empty
+      K-->>Cron: [] → "No overdue vaults"
+    else vaults due
+      K-->>Cron: [vaultA, vaultB]
+      Cron->>F: report abi.encode(address[])
+      F->>K: onReport
+      K->>V: cancelFunding() or markDefault() {gas: 250k}
+      V->>R: onFundingFailed / onDefaulted
+      R->>R: release limits, burn NFT, flag seller (default)
+    end
+  end
+`}
+/>
+
+## Modes
+
+| Mode | Who closes | When |
+| --- | --- | --- |
+| `cre` | `keeper` workflow via `scripts/keeper-loop.sh` (pm2) | Every `KEEPER_INTERVAL` seconds (default 60) |
+| `relayer` | The app's `/api/keeper`, calling `closeDue` | When a screen shows a vault past its deadline |
+| Anyone | `closeDue`, `cancelFunding`, `markDefault` directly | Any time after the deadline |
+
+The deadlines are checked onchain in every path, so the keeper cannot close anything early, and needs no special role.

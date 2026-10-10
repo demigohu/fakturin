@@ -1,0 +1,59 @@
+---
+title: HTTP API
+description: Server routes of the web app, including the simulated PJAP and the simulated credential issuer.
+---
+
+All routes live in `apps/web/app/api`. Routes marked **simulated** stand in for outside providers and are labelled in the UI.
+
+## `GET /api/pjap/faktur/{number}` (simulated)
+
+PJAP Faktur Pajak lookup. Deterministic: the same number always returns the same invoice. Called by the CRE verify workflow and the relayer.
+
+```json
+{
+  "simulated": true,
+  "nomorFaktur": "04002600012345",
+  "status": "VALID",
+  "tanggalFaktur": "2026-10-01",
+  "jatuhTempo": "2026-11-30T00:00:00.000Z",
+  "penjual": { "npwp": "0123456789012000", "nama": "CV Rina Kemasan Mandiri" },
+  "pembeli": { "npwp": "0987654321098000", "nama": "PT Sinar Kemasindo Utama" },
+  "dpp": 90090090,
+  "ppn": 9909910,
+  "total": 100000000
+}
+```
+
+`status` is one of `VALID`, `TIDAK_DITEMUKAN` (HTTP 404), `DIBATALKAN`, `DIGANTI`. Number layout in the simulation: `040026` · seller code (5 digits) · serial (5 digits). See [demo shortcuts](/docs/getting-started#demo-shortcuts).
+
+## `GET /api/pjap/account/{wallet}` (simulated)
+
+The business linked to a wallet, standing in for "sign in with your PJAP / Coretax account" during KYB: name, NPWP, PKP status and seller code.
+
+## `POST /api/identity` (simulated issuer)
+
+Plays the licensed KYC/KYB provider and writes Chainlink ACE records.
+
+```json
+{ "kind": "kyb", "address": "0x…", "issuedAt": "2026-10-10T08:00:00.000Z", "signature": "0x…" }
+```
+
+| Status | Meaning |
+| --- | --- |
+| 200 | `{ ok, ccid, hashes, business? }` |
+| 400 | Missing fields or signature older than 15 minutes |
+| 401 | Signature does not match the wallet |
+| 422 | Business is not a registered PKP (KYB) |
+| 503 | Issuer not configured |
+
+## `POST /api/verify` (relayer mode)
+
+`{ "invoiceId": "0x…" }`. Runs the same mapping as the CRE workflow and calls `fulfillVerification`. Returns `{ hash, status, invoiceStatus, rejectCode }`, `{ skipped: true }` when not pending, or `202 { mode: "cre" }` in CRE mode.
+
+## `POST /api/keeper` (relayer mode)
+
+Calls `FakturKeeper.closeDue(10)` with explicit gas (`150 000 + 300 000 × vaults`) when `closable()` is non-empty. Needs no role; the key only pays gas. Returns `202 { mode: "cre" }` in CRE mode.
+
+## Docs routes
+
+This site also serves `GET /llms.txt`, `GET /llms-full.txt` and `GET /docs/{page}.md` (Markdown of any page) for AI tools.

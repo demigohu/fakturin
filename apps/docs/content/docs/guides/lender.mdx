@@ -1,0 +1,116 @@
+---
+title: Lender guide
+description: For individuals and institutions that lend against verified invoices, one invoice at a time.
+---
+
+<Figure
+  src="/illustrations/pemberi-dana.webp"
+  scene
+  alt="A lender with coins"
+  caption="You choose each invoice yourself. There is no pool: every invoice has its own vault, its own terms and its own outcome."
+/>
+
+## What you are buying
+
+When you lend to an invoice you deposit MockIDRX into that invoice's **ERC-4626 vault** and receive **shares** in it. Shares are a claim on whatever the vault holds when the invoice closes. They cannot be transferred or sold; you redeem them at the end.
+
+## Step by step
+
+<Steps>
+<Step>
+
+### Connect and get test money
+
+Connect a wallet on **Lend**. The checklist on the right shows three things: wallet connected, identity verified, MockIDRX balance. Press **Get test MockIDRX** if your balance is empty.
+
+</Step>
+<Step>
+
+### Verify your identity (once)
+
+Press **Verify your identity** and sign the message. Signing is free. The issuer writes a CCID and a `common.kyc` credential for your wallet to Chainlink ACE. Vaults only accept deposits from wallets that pass the ACE funder validator. If the credential is ever revoked, your next deposit is refused immediately.
+
+</Step>
+<Step>
+
+### Read an invoice card
+
+Each open invoice shows:
+
+| Field | Meaning |
+| --- | --- |
+| Return | What every rupiah lent earns by the due date, after the platform fee, and the same as a simple yearly rate. |
+| Raised / target | How much is already in. The target is the invoice amount minus the seller's cost. |
+| Funding closes | When the 3-day window ends. If the target is not reached by then, everyone is refunded 1:1. |
+| Repay date | The due date on the Faktur Pajak. |
+| Details | The tax-office data (buyer, seller, amount), the invoice NFT and where the return comes from. |
+
+</Step>
+<Step>
+
+### Lend any amount
+
+Type an amount up to what is still missing and press **Lend**. Two wallet prompts:
+
+1. **Approve** the vault to take exactly that amount.
+2. **Deposit**: the vault takes it and mints your shares.
+
+If your deposit fills the target, the same transaction pays the seller 80% of the invoice.
+
+</Step>
+<Step>
+
+### Wait, then withdraw
+
+**My loans** tracks every vault you hold shares in. When the invoice closes, press **Withdraw with your return** (or **Withdraw** after a default or a cancelled funding). You redeem all your shares for your part of the vault.
+
+</Step>
+</Steps>
+
+## Where the return comes from
+
+Take a Rp100,000,000 invoice due in 60 days.
+
+| | Amount |
+| --- | --- |
+| Lenders together put in (the target) | Rp97,000,000 |
+| Seller repays the full invoice | Rp100,000,000 |
+| Holdback returned to the seller | −Rp17,000,000 (it was the lenders' money left in the vault) |
+| Platform fee (10% of the seller's 3M cost) | −Rp300,000 |
+| **Lenders take out** | **Rp99,700,000** |
+| Return | +Rp2,700,000, **2.78% in 60 days**, about 16.9% a year simple |
+
+Each lender gets a share of the Rp99.7M equal to its share of the Rp97M. If you lent Rp48,500,000 (half), you withdraw Rp49,850,000.
+
+<PricingCalculator />
+
+## What can go wrong
+
+<Callout type="error" title="Default">
+  If the seller does not repay by the due date plus the grace period, the vault is closed as **Defaulted**. Lenders share only the **holdback** still in the vault (Rp17M of the Rp97M in the example), pro rata. The platform takes no fee. The seller is flagged and can never borrow again. Recovering the rest from the seller is an offchain, legal matter (recourse).
+</Callout>
+
+| Outcome | What you get back |
+| --- | --- |
+| Repaid | Your deposit plus its share of the return. |
+| Funding failed (target not reached in 3 days) | Your deposit, 1:1. No return, no loss. |
+| Defaulted | Your share of the holdback, a large loss. |
+
+Other risks to understand:
+
+- **Simulated data.** The tax-office data and identity checks are simulated in this demo. A real deployment relies on a licensed PJAP and KYC/KYB provider.
+- **No secondary market.** You cannot sell your shares before the invoice closes.
+- **Collusion.** Fakturin proves an invoice exists in the tax system and belongs to the seller. It does not prove the goods were delivered, or that seller and buyer are not working together. The Faktur Pajak's VAT trail makes fake trade costly, not impossible.
+- **Smart contract risk.** The contracts are tested but not audited.
+
+<Accordions>
+<Accordion title="Can I lend before the seller has verified?">
+No. A vault only exists after Chainlink verified the Faktur Pajak and matched the seller's NPWP.
+</Accordion>
+<Accordion title="Can I withdraw early?">
+No. Shares unlock only when the invoice is Repaid, Defaulted, or its funding failed.
+</Accordion>
+<Accordion title="Who presses 'default' or 'cancel'?">
+Nobody. The keeper (a Chainlink CRE cron workflow) closes overdue vaults automatically. The functions stay public, so anyone can also close an overdue vault.
+</Accordion>
+</Accordions>

@@ -1,0 +1,31 @@
+---
+title: Invoice NFT
+description: The Faktur Pajak as an ERC-721 token, locked in its vault, drawn onchain as SVG with a status stamp, and burned when the claim ends.
+---
+
+<Figure
+  src="/illustrations/stempel.webp"
+  alt="A rubber stamp"
+  caption="The picture is drawn by the contract itself and stamped with the invoice's status: CHECKING, VERIFIED, FINANCED, LUNAS, DEFAULT, REJECTED or UNFUNDED."
+/>
+
+`FakturNFT` (symbol `FKTR`) is an ERC-721 whose token ID is the invoice ID. The registry mints it **into the invoice's vault** at verification, and it cannot be transferred. It is the onchain claim on the invoice: as long as it sits in a vault, that invoice is spoken for.
+
+## Lifecycle
+
+| Event | NFT |
+| --- | --- |
+| Verified | Minted to the vault, stamp VERIFIED |
+| Financed | Still in the vault, stamp FINANCED |
+| Repaid / Defaulted / Funding failed | **Burned**; the picture keeps LUNAS, DEFAULT or UNFUNDED |
+
+Burning on close means a live token always equals a live claim. Wallets and marketplaces never show a token for an invoice that is already settled.
+
+## Onchain image
+
+`FakturRenderer` builds the image from the registry, so it works even after the token is burned:
+
+- `svg(invoiceId)` returns the raw 400×520 SVG: Faktur Pajak number, amount in rupiah, invoice date, due date, buyer NPWP hash and token ID (both shortened), and the stamp.
+- `tokenURI(invoiceId)` returns a `data:application/json;base64,…` document with name, description, the SVG as `image` and attributes Status, Amount (IDR) and Due date.
+
+`FakturNFT.tokenURI` delegates to the renderer; the admin can swap renderers with `setRenderer` without touching tokens. The app shows the picture on Borrow, Lend and Check, because the token never reaches a user wallet.

@@ -11,7 +11,12 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@repo/ui": "*",
+    "fumadocs-core": "^16.17.1",
+    "fumadocs-mdx": "^15.4.7",
+    "fumadocs-ui": "npm:@fumadocs/base-ui@^16.17.1",
+    "mermaid": "^12.1.0",
     "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8"
@@ -19,10 +24,14 @@
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/mdx": "^2.0.14",
     "@types/node": "26.4.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
     "eslint": "10.9.1",
+    "postcss": "^8.5.29",
+    "tailwindcss": "^4.3.3",
     "typescript": "7.0.2"
   }
 }
