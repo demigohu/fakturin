@@ -45,3 +45,6 @@ yarn-error.log*
 
 # Playwright CLI session logs
 .playwright-cli
+
+# Remotion pitch video project (local only)
+video/
