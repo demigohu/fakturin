@@ -16,6 +16,11 @@
         "name": "factory_",
         "type": "address",
         "internalType": "contract FakturVaultFactory"
+      },
+      {
+        "name": "treasury_",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "nonpayable"
@@ -36,6 +41,19 @@
   {
     "type": "function",
     "name": "DEFAULT_ADMIN_ROLE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "PKP_CREDENTIAL",
     "inputs": [],
     "outputs": [
       {
@@ -126,6 +144,19 @@
   },
   {
     "type": "function",
+    "name": "REJECT_TENOR",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "VERIFIER_ROLE",
     "inputs": [],
     "outputs": [
@@ -203,13 +234,13 @@
   },
   {
     "type": "function",
-    "name": "discountBps",
+    "name": "credentialRegistry",
     "inputs": [],
     "outputs": [
       {
         "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "address",
+        "internalType": "contract ICredentialRegistry"
       }
     ],
     "stateMutability": "view"
@@ -271,6 +302,11 @@
             "internalType": "uint8"
           },
           {
+            "name": "sellerNpwpHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
             "name": "buyerNpwpHash",
             "type": "bytes32",
             "internalType": "bytes32"
@@ -295,6 +331,19 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "funderValidator",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IIdentityValidator"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -451,6 +500,19 @@
   },
   {
     "type": "function",
+    "name": "identityRegistry",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IIdentityRegistry"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "invoiceOfVault",
     "inputs": [
       {
@@ -473,7 +535,7 @@
     "name": "isFunder",
     "inputs": [
       {
-        "name": "",
+        "name": "account",
         "type": "address",
         "internalType": "address"
       }
@@ -483,6 +545,38 @@
         "name": "",
         "type": "bool",
         "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "isSeller",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "maxTenor",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
       }
     ],
     "stateMutability": "view"
@@ -554,22 +648,11 @@
   },
   {
     "type": "function",
-    "name": "quote",
-    "inputs": [
-      {
-        "name": "nominal",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
+    "name": "platformFeeBps",
+    "inputs": [],
     "outputs": [
       {
-        "name": "target",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "advance",
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -578,10 +661,62 @@
   },
   {
     "type": "function",
-    "name": "registerAsFunder",
+    "name": "quote",
+    "inputs": [
+      {
+        "name": "nominal",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "dueDate",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "q",
+        "type": "tuple",
+        "internalType": "struct FakturRegistry.Quote",
+        "components": [
+          {
+            "name": "target",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "advance",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "discount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "fee",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "ratePer30dBps",
     "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -640,19 +775,6 @@
   },
   {
     "type": "function",
-    "name": "selfServeKyc",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "sellerDefaulted",
     "inputs": [
       {
@@ -685,6 +807,25 @@
   },
   {
     "type": "function",
+    "name": "sellerNpwpHash",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "sellerOutstanding",
     "inputs": [
       {
@@ -704,17 +845,40 @@
   },
   {
     "type": "function",
-    "name": "setFunder",
+    "name": "sellerValidator",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IIdentityValidator"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "setIdentity",
     "inputs": [
       {
-        "name": "funder",
+        "name": "identityRegistry_",
         "type": "address",
-        "internalType": "address"
+        "internalType": "contract IIdentityRegistry"
       },
       {
-        "name": "allowed",
-        "type": "bool",
-        "internalType": "bool"
+        "name": "credentialRegistry_",
+        "type": "address",
+        "internalType": "contract ICredentialRegistry"
+      },
+      {
+        "name": "funderValidator_",
+        "type": "address",
+        "internalType": "contract IIdentityValidator"
+      },
+      {
+        "name": "sellerValidator_",
+        "type": "address",
+        "internalType": "contract IIdentityValidator"
       }
     ],
     "outputs": [],
@@ -725,7 +889,12 @@
     "name": "setParameters",
     "inputs": [
       {
-        "name": "discountBps_",
+        "name": "ratePer30dBps_",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "platformFeeBps_",
         "type": "uint256",
         "internalType": "uint256"
       },
@@ -733,6 +902,11 @@
         "name": "advanceBps_",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "maxTenor_",
+        "type": "uint64",
+        "internalType": "uint64"
       },
       {
         "name": "fundingWindow_",
@@ -760,12 +934,12 @@
   },
   {
     "type": "function",
-    "name": "setSelfServeKyc",
+    "name": "setTreasury",
     "inputs": [
       {
-        "name": "open",
-        "type": "bool",
-        "internalType": "bool"
+        "name": "treasury_",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -791,20 +965,45 @@
     "stateMutability": "view"
   },
   {
+    "type": "function",
+    "name": "treasury",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
     "type": "event",
-    "name": "FunderUpdated",
+    "name": "IdentityConfigured",
     "inputs": [
       {
-        "name": "funder",
+        "name": "identityRegistry",
         "type": "address",
-        "indexed": true,
+        "indexed": false,
         "internalType": "address"
       },
       {
-        "name": "allowed",
-        "type": "bool",
+        "name": "credentialRegistry",
+        "type": "address",
         "indexed": false,
-        "internalType": "bool"
+        "internalType": "address"
+      },
+      {
+        "name": "funderValidator",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "sellerValidator",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
       }
     ],
     "anonymous": false
@@ -1061,7 +1260,7 @@
   },
   {
     "type": "error",
-    "name": "KycClosed",
+    "name": "InvalidParameters",
     "inputs": []
   },
   {
@@ -1077,6 +1276,11 @@
   {
     "type": "error",
     "name": "SellerIsDefaulted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SellerNotVerified",
     "inputs": []
   }
 ]

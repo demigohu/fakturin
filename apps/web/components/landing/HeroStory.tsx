@@ -15,20 +15,20 @@ const CHAPTERS = [
   {
     who: "Seller",
     tone: "var(--cat-lilac)",
-    title: "Enter a Faktur Pajak.",
-    body: "Type the number from your tax invoice and sign once. No buyer contact, no document upload. Your buyer never has to use the app.",
+    title: "Verify once, pick a Faktur Pajak.",
+    body: "Your business is verified once and stored as a Chainlink ACE credential. Then pick an invoice from Coretax and sign. No documents, and your customer never has to use the app.",
   },
   {
     who: "Chainlink CRE",
     tone: "var(--accent)",
     title: "Checked with the tax system.",
-    body: "A Chainlink CRE workflow asks PJAP whether the invoice is real, not cancelled, and not financed anywhere else. Then a funding vault opens.",
+    body: "A Chainlink CRE workflow asks PJAP whether the invoice is real and not cancelled. The contract checks it carries your NPWP and was never financed, then opens a funding vault.",
   },
   {
     who: "Funders",
     tone: "var(--cat-green)",
     title: "Funded by many, once.",
-    body: "Funders pick the invoice and each put in what they want. When the vault is full, 80% reaches the seller in the same transaction.",
+    body: "Verified funders pick the invoice and each put in what they want. When the vault is full, 80% reaches the seller in the same transaction.",
   },
 ];
 
@@ -136,11 +136,11 @@ export function HeroStory() {
       <div className={l.heroText}>
         <div className={l.heroFirst}>
           <h1 className={l.h1} data-split="words" data-split-trigger="intro" data-stagger="0.07">
-            Verified invoices, funded today.
+            Get paid today, not in 60 days.
           </h1>
           <p className={l.heroSub}>
-            Turn a Faktur Pajak into same-day cash. Chainlink checks it with the tax system, funders
-            fill it together, and it can be financed only once.
+            Invoice financing for Indonesian small businesses: borrow against a Faktur Pajak that
+            Chainlink checks with the tax office. Verified funders lend and earn about 16% a year.
           </p>
           <dl className={l.heroMeta}>
             <div>
@@ -153,8 +153,8 @@ export function HeroStory() {
             </div>
           </dl>
           <div className={l.heroCtas}>
-            <Link href="/penjual" className={l.cta} data-magnetic="24">
-              <span className={l.ctaLabel}>Submit an invoice</span>
+            <Link href="/borrow" className={l.cta} data-magnetic="24">
+              <span className={l.ctaLabel}>Borrow against an invoice</span>
               <span className={l.ctaIcon}>
                 <ArrowUpRight size={22} aria-hidden />
               </span>

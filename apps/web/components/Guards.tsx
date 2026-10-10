@@ -11,7 +11,7 @@ export function NotConfigured() {
     <Panel title="Contracts not connected" tag="Setup">
       <EmptyState title="Contract addresses are missing">
         Deploy the v2 contracts (script/DeployFaktur.s.sol) to Arbitrum Sepolia, copy the
-        addresses into apps/web/.env.local following .env.example, then restart the dev server.
+        addresses into apps/web/.env following .env.example, then restart the dev server.
       </EmptyState>
       <pre className="mono" style={{ fontSize: 13, overflowX: "auto", lineHeight: 1.5 }}>
         {`cd apps/contracts-solidity

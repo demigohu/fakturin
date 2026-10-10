@@ -1,4 +1,5 @@
 import { keccak256, toBytes } from "viem";
+import { UNIT } from "./token";
 
 /**
  * SIMULATED PJAP (tax application provider) lookup for a Faktur Pajak number.
@@ -8,6 +9,12 @@ import { keccak256, toBytes } from "viem";
  * module returns data shaped like a PJAP response, generated deterministically from the number,
  * so the same number always gives the same invoice. Swapping in a real PJAP means replacing
  * `lookupFaktur` with an HTTP call; the Chainlink CRE workflow reads the same JSON shape.
+ *
+ * Number layout used by the simulation: 040026 · seller code (5 digits) · serial (5 digits).
+ * The seller code decides whose invoice it is: `pjapAccount(wallet)` gives every wallet one
+ * simulated PJAP account (NPWP + business name + seller code), so the invoices listed for a
+ * wallet are issued under the NPWP its KYB credential carries, and anyone else's number fails
+ * the onchain NPWP match.
  *
  * Demo numbers (last four digits):
  *   ...0000  not found          ...9999  cancelled (dibatalkan)
@@ -65,6 +72,39 @@ function npwp(bytes: Uint8Array, offset: number): string {
   return out;
 }
 
+/** The business behind a seller code: same code, same NPWP and name, everywhere. */
+function sellerOfCode(code: string): { npwp: string; nama: string } {
+  const b = toBytes(keccak256(toBytes(`pjap-seller:${code}`)));
+  return { npwp: npwp(b, 0), nama: SELLERS[b[20]! % SELLERS.length]! };
+}
+
+/** Seller code embedded in a Faktur Pajak number (digits 7 to 11). */
+export function sellerCodeOf(digits: string): string {
+  return digits.slice(6, 11).padEnd(5, "0");
+}
+
+export type PjapAccount = { simulated: true; npwp: string; nama: string; sellerCode: string; pkp: true };
+
+/**
+ * SIMULATED "sign in with PJAP": the tax account linked to a wallet. A real deployment gets this
+ * from the seller's PJAP/Coretax login during KYB; here it is derived from the wallet address.
+ */
+export function pjapAccount(wallet: string): PjapAccount {
+  const b = toBytes(keccak256(toBytes(`pjap-account:${wallet.toLowerCase()}`)));
+  const code = String(((b[0]! << 16) | (b[1]! << 8) | b[2]!) % 100_000).padStart(5, "0");
+  return { simulated: true, ...sellerOfCode(code), sellerCode: code, pkp: true };
+}
+
+/** Fresh Faktur Pajak numbers issued under a seller code (random serials, avoiding demo endings). */
+export function fakturNumbersFor(sellerCode: string, count: number): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const serial = String(Math.floor(Math.random() * 100_000)).padStart(5, "0").replace(/(0000|9999|8888|7777)$/, "1234");
+    out.push(`040026${sellerCode}${serial}`);
+  }
+  return out;
+}
+
 export function lookupFaktur(raw: string, now: Date = new Date()): PjapFaktur {
   const nomorFaktur = normalizeFakturNumber(raw);
   if (nomorFaktur.length < 13 || nomorFaktur.length > 17 || nomorFaktur.endsWith("0000")) {
@@ -86,7 +126,7 @@ export function lookupFaktur(raw: string, now: Date = new Date()): PjapFaktur {
     status: "VALID",
     tanggalFaktur: issued.toISOString().slice(0, 10),
     jatuhTempo: due.toISOString(),
-    penjual: { npwp: npwp(b, 3), nama: SELLERS[b[4]! % SELLERS.length]! },
+    penjual: sellerOfCode(sellerCodeOf(nomorFaktur)),
     pembeli: { npwp: npwp(b, 11), nama: BUYERS[b[5]! % BUYERS.length]! },
     dpp,
     ppn: total - dpp,
@@ -102,9 +142,16 @@ export function lookupFaktur(raw: string, now: Date = new Date()): PjapFaktur {
 }
 
 /** Registry reject codes (FakturRegistry.REJECT_*). */
-export const REJECT = { NOT_FOUND: 1, CANCELLED: 2, REPLACED: 3, SELLER_MISMATCH: 4, EXPIRED: 5, LIMIT: 6 } as const;
+export const REJECT = { NOT_FOUND: 1, CANCELLED: 2, REPLACED: 3, SELLER_MISMATCH: 4, EXPIRED: 5, LIMIT: 6, TENOR: 7 } as const;
 
-/** Maps a PJAP response to the registry's Verification struct (amounts in 18-decimal MockIDR). */
+const ZERO32 = `0x${"0".repeat(64)}` as const;
+
+/** keccak256 of the NPWP digits: what ACE credentials and the registry store, never the NPWP itself. */
+export function npwpHash(npwpDigits: string): `0x${string}` {
+  return keccak256(toBytes(npwpDigits));
+}
+
+/** Maps a PJAP response to the registry's Verification struct (amounts in MockIDRX units, 2 decimals). */
 export function toVerification(f: PjapFaktur) {
   const rejectCode =
     f.status === "VALID"
@@ -118,20 +165,15 @@ export function toVerification(f: PjapFaktur) {
   return {
     valid,
     rejectCode,
-    buyerNpwpHash: valid ? keccak256(toBytes(f.pembeli!.npwp)) : (`0x${"0".repeat(64)}` as const),
-    nominal: valid ? BigInt(f.total!) * 10n ** 18n : 0n,
+    sellerNpwpHash: valid ? npwpHash(f.penjual!.npwp) : ZERO32,
+    buyerNpwpHash: valid ? npwpHash(f.pembeli!.npwp) : ZERO32,
+    nominal: valid ? BigInt(f.total!) * UNIT : 0n,
     issuedAt: valid ? BigInt(Math.floor(new Date(f.tanggalFaktur!).getTime() / 1000)) : 0n,
     dueDate: valid ? BigInt(Math.floor(new Date(f.jatuhTempo!).getTime() / 1000)) : 0n,
   };
 }
 
-/** A few ready-made numbers for the demo console and placeholders. */
-export function demoNumbers(count = 6): string[] {
-  const out: string[] = [];
-  for (let i = 0; i < count; i++) {
-    // 14 digits, Coretax-like prefix; random so each visit gets fresh, unregistered numbers.
-    const n = String(Math.floor(Math.random() * 100_000_000)).padStart(8, "0");
-    out.push(`040026${n}`.replace(/(0000|9999|8888|7777)$/, "1234"));
-  }
-  return out;
+/** 0012345678901234 -> 00.***.***.*-901.234 (display only; never store or send the full NPWP onchain). */
+export function maskNpwp(npwpDigits: string): string {
+  return `${npwpDigits.slice(0, 2)}.***.***.*-${npwpDigits.slice(-6, -3)}.${npwpDigits.slice(-3)}`;
 }

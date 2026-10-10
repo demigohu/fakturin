@@ -28,6 +28,9 @@ import { z } from 'zod'
  * 2. Every node asks PJAP about the Faktur Pajak; nodes must agree on the result.
  * 3. The agreed result is ABI-encoded and written to FakturVerifierReceiver, which holds
  *    VERIFIER_ROLE and calls FakturRegistry.fulfillVerification.
+ * 4. The result carries the NPWP hash of the seller named on the Faktur Pajak; the registry
+ *    matches it against the requesting wallet's Chainlink ACE PKP credential (FR-13), so nobody
+ *    can finance somebody else's invoice.
  *
  * PJAP is SIMULATED for the hackathon (apps/web/app/api/pjap); the JSON shape mirrors a PJAP
  * Faktur Pajak lookup, so pointing pjapBaseUrl at a real PJAP is the only change needed.
@@ -55,6 +58,7 @@ type PjapFaktur = {
   status: 'VALID' | 'TIDAK_DITEMUKAN' | 'DIBATALKAN' | 'DIGANTI'
   tanggalFaktur?: string
   jatuhTempo?: string
+  penjual?: { npwp: string }
   pembeli?: { npwp: string }
   total?: number
 }
@@ -63,6 +67,7 @@ type PjapFaktur = {
 type VerificationResult = {
   valid: boolean
   rejectCode: number
+  sellerNpwpHash: string
   buyerNpwpHash: string
   nominal: string
   issuedAt: string
@@ -71,10 +76,13 @@ type VerificationResult = {
 
 const ZERO32 = `0x${'0'.repeat(64)}`
 
+/** MockIDRX / IDRX have 2 decimals: one rupiah is 100 token units (must match apps/web/lib/token.ts). */
+const TOKEN_UNIT = 100n
+
 const fetchVerification = (requester: HTTPSendRequester, url: string): VerificationResult => {
   const response = requester.sendRequest({ method: 'GET', url }).result()
   if (response.statusCode === 404) {
-    return { valid: false, rejectCode: REJECT.NOT_FOUND, buyerNpwpHash: ZERO32, nominal: '0', issuedAt: '0', dueDate: '0' }
+    return { valid: false, rejectCode: REJECT.NOT_FOUND, sellerNpwpHash: ZERO32, buyerNpwpHash: ZERO32, nominal: '0', issuedAt: '0', dueDate: '0' }
   }
   if (response.statusCode !== 200) {
     throw new Error(`PJAP request failed with status ${response.statusCode}`)
@@ -83,13 +91,14 @@ const fetchVerification = (requester: HTTPSendRequester, url: string): Verificat
   if (f.status !== 'VALID') {
     const rejectCode =
       f.status === 'DIBATALKAN' ? REJECT.CANCELLED : f.status === 'DIGANTI' ? REJECT.REPLACED : REJECT.NOT_FOUND
-    return { valid: false, rejectCode, buyerNpwpHash: ZERO32, nominal: '0', issuedAt: '0', dueDate: '0' }
+    return { valid: false, rejectCode, sellerNpwpHash: ZERO32, buyerNpwpHash: ZERO32, nominal: '0', issuedAt: '0', dueDate: '0' }
   }
   return {
     valid: true,
     rejectCode: 0,
+    sellerNpwpHash: keccak256(toBytes(f.penjual!.npwp)),
     buyerNpwpHash: keccak256(toBytes(f.pembeli!.npwp)),
-    nominal: (BigInt(f.total!) * 10n ** 18n).toString(),
+    nominal: (BigInt(f.total!) * TOKEN_UNIT).toString(),
     issuedAt: String(Math.floor(new Date(f.tanggalFaktur!).getTime() / 1000)),
     dueDate: String(Math.floor(new Date(f.jatuhTempo!).getTime() / 1000)),
   }
@@ -122,6 +131,7 @@ export const onVerificationRequested = (runtime: Runtime<Config>, log: LogPayloa
         components: [
           { type: 'bool', name: 'valid' },
           { type: 'uint8', name: 'rejectCode' },
+          { type: 'bytes32', name: 'sellerNpwpHash' },
           { type: 'bytes32', name: 'buyerNpwpHash' },
           { type: 'uint256', name: 'nominal' },
           { type: 'uint64', name: 'issuedAt' },
@@ -134,6 +144,7 @@ export const onVerificationRequested = (runtime: Runtime<Config>, log: LogPayloa
       {
         valid: v.valid,
         rejectCode: v.rejectCode,
+        sellerNpwpHash: v.sellerNpwpHash as Hex,
         buyerNpwpHash: v.buyerNpwpHash as Hex,
         nominal: BigInt(v.nominal),
         issuedAt: BigInt(v.issuedAt),

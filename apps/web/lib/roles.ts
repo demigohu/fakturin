@@ -12,23 +12,23 @@ export type Role = {
 
 export const ROLES: Role[] = [
   {
-    href: "/penjual",
-    label: "Seller",
+    href: "/borrow",
+    label: "Borrow",
     who: "Seller (PKP)",
     tone: "var(--cat-lilac)",
     asset: "penjual",
-    summary: "Enter a Faktur Pajak number. Chainlink CRE checks it with the tax system and opens a funding vault.",
+    summary: "Borrow against a Faktur Pajak. 80% of it lands in your wallet as soon as funders fill it; repay when your customer pays you.",
   },
   {
-    href: "/pasar",
-    label: "Market",
+    href: "/lend",
+    label: "Lend",
     who: "Funder",
     tone: "var(--cat-green)",
     asset: "pemberiDana",
-    summary: "Pick a verified invoice and fund any part of it. Withdraw with the return when it is repaid.",
+    summary: "Lend to small businesses against tax invoices checked with the tax office. Earn about 16% a year: 1.5% per 30 days, minus a 10% platform fee.",
   },
   {
-    href: "/cek",
+    href: "/check",
     label: "Check invoice",
     who: "Anyone",
     tone: "var(--cat-cyan)",

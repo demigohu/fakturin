@@ -3,15 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./MockIDR": "./src/MockIDR.json",
-    "./InvoiceRegistry": "./src/InvoiceRegistry.json",
-    "./InvoiceMarketplace": "./src/InvoiceMarketplace.json",
-    "./InvoiceNFT": "./src/InvoiceNFT.json",
+    "./MockIDRX": "./src/MockIDRX.json",
     "./FakturRegistry": "./src/FakturRegistry.json",
     "./FakturVault": "./src/FakturVault.json",
     "./FakturNFT": "./src/FakturNFT.json",
     "./FakturVaultFactory": "./src/FakturVaultFactory.json",
     "./FakturVerifierReceiver": "./src/FakturVerifierReceiver.json",
-    "./FakturKeeper": "./src/FakturKeeper.json"
+    "./FakturKeeper": "./src/FakturKeeper.json",
+    "./FakturRenderer": "./src/FakturRenderer.json",
+    "./AceIdentityRegistry": "./src/AceIdentityRegistry.json",
+    "./AceCredentialRegistry": "./src/AceCredentialRegistry.json"
   }
 }

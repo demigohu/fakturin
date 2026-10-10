@@ -1,71 +1,61 @@
-# Fakturin CRE (simulasi)
+# Fakturin: Chainlink CRE workflows
 
-Deploy access: **Not enabled** — pakai `cre workflow simulate` (+ `--broadcast` bila perlu tx testnet).
+Two workflows run Fakturin's automatic steps on Arbitrum Sepolia. Chainlink lets anyone **simulate**
+workflows locally; with `--broadcast` the simulation sends real transactions through Chainlink's
+forwarder (`0xD41263567DdfeAd91504199b8c6c87371e83ca5d`), which `FakturVerifierReceiver` and
+`FakturKeeper` accept. Deploying to Chainlink's DON (testnet/mainnet) is a commercial agreement and is
+not needed for the demo.
 
-## Prasyarat
+| Workflow | Trigger | What it does | Runs as |
+| --- | --- | --- | --- |
+| `verify/` | EVM log `FakturRegistry.VerificationRequested` | Asks PJAP (mock: `apps/web /api/pjap`) about the Faktur Pajak, writes the result (incl. seller NPWP hash) to `FakturVerifierReceiver` | `scripts/verify-listen.sh` (`simulate --listen`, always on) |
+| `keeper/` | Cron | Reads `FakturKeeper.closable()`, writes a report that cancels unfilled vaults and defaults unpaid ones | `scripts/keeper-loop.sh` (one simulation every `KEEPER_INTERVAL` s; cron triggers cannot `--listen`) |
 
-- `cre login`
-- `cp .env.example .env` lalu isi `CRE_ETH_PRIVATE_KEY` (bukan kunci Anvil kosong)
-- **Saldo ETH Arbitrum Sepolia** (~0.002 ETH untuk deploy + broadcast)
+`nav/`, `por/`, `settlement/`, `contracts/` and `scripts/run-simulate.sh` are templates / v1 leftovers,
+not used by Fakturin v3.
 
-Cek alamat & saldo:
+## Run on a VPS with pm2
 
 ```bash
+# once
+# CRE CLI v1.38+: follow https://docs.chain.link/cre (Getting started → install the CLI)
+curl -fsSL https://bun.sh/install | bash             # bun, used to compile the TS workflows
+npm i -g pm2
+cre login                                            # or CRE_API_KEY in .env
+
 cd apps/fakturin-cre
-source .env
-cast wallet address --private-key "$CRE_ETH_PRIVATE_KEY"
-cast balance $(cast wallet address --private-key "$CRE_ETH_PRIVATE_KEY") \
-  --rpc-url https://sepolia-rollup.arbitrum.io/rpc
+(cd verify && bun install) && (cd keeper && bun install)
+cp .env.example .env                                 # CRE_ETH_PRIVATE_KEY, CRE_TARGET=staging-settings
 ```
 
-## 1. Deploy kontrak + consumer (Foundry)
-
-Forwarder sim CRE: `0xD41263567DdfeAd91504199b8c6c87371e83ca5d`
+Set `verify/config.json` → `pjapBaseUrl` to the **public URL of the web app** (the mock PJAP lives
+there), e.g. `https://fakturin.example.com/api/pjap/faktur`. `localhost:3000` only works when the web
+app runs on the same machine. Contract addresses in `verify/config.json` and `keeper/config.json`
+already point at the v3 deployment.
 
 ```bash
-cd apps/contracts-solidity
-cp .env.example .env   # PRIVATE_KEY + ARBISCAN_API_KEY
-
-# Opsional: samakan key dengan CRE
-# grep CRE_ETH_PRIVATE_KEY ../fakturin-cre/.env >> .env  # jangan duplikasi variabel
-
-chmod +x scripts/deploy-and-verify.sh
-set -a && source .env && set +a
-./scripts/deploy-and-verify.sh cre
+pm2 start ecosystem.config.cjs
+pm2 save && pm2 startup          # survive reboots
+pm2 logs fakturin-cre-verify     # "VerificationRequested … / PJAP result … / Verification written: 0x…"
+pm2 logs fakturin-cre-keeper     # "No overdue vaults" or "Closing 1 vault(s) … / Keeper report written"
 ```
 
-Tanpa verify (hanya broadcast):
+Then switch the web app to CRE mode: `NEXT_PUBLIC_VERIFIER=cre` in `apps/web/.env` (rebuild /
+restart). The app stops calling its own relayer for these two jobs and waits for the CRE result.
+
+Notes:
+- The listener starts at the current block. If it was down while an invoice was submitted, process
+  that one by hand: `cre workflow simulate verify --broadcast --non-interactive --trigger-index 0
+  --evm-tx-hash 0x<submit tx> --evm-event-index 0`.
+- The KYC/KYB issuer is not a CRE job; it stays in the web app (`/api/identity`).
+
+## Local test against an anvil fork
 
 ```bash
-forge script script/DeployCre.s.sol:DeployCre \
-  --rpc-url "${ARBITRUM_SEPOLIA_RPC_URL:-https://sepolia-rollup.arbitrum.io/rpc}" \
-  --broadcast
+anvil --fork-url https://sepolia-rollup.arbitrum.io/rpc --chain-id 421614 --block-time 1
+# deploy with apps/contracts-solidity/script/DeployFaktur.s.sol, then put the local addresses in
+# verify/config.local.json and keeper/config.local.json (gitignored), and use an env file with
+# CRE_TARGET=local-settings and an anvil key:
+CRE_ENV_FILE=.env.local-fork CRE_TARGET=local-settings ./scripts/verify-listen.sh
+CRE_ENV_FILE=.env.local-fork CRE_TARGET=local-settings KEEPER_INTERVAL=30 ./scripts/keeper-loop.sh
 ```
-
-Salin alamat dari log ke `settlement/config.json` (`consumerAddress`) dan `apps/web/.env.local`.
-
-## 2. Simulasi workflow (tanpa tx)
-
-```bash
-cd apps/fakturin-cre
-cp .env.example .env   # jika belum
-./scripts/run-simulate.sh
-```
-
-Isi `invoiceId` di `settlement/config.json` setelah ada faktur status **Dibiayai** (dan fund receiver dengan MockIDR nominal).
-
-## 3. Simulasi + broadcast ke Arbitrum Sepolia
-
-```bash
-cd apps/fakturin-cre
-./scripts/run-simulate.sh --broadcast
-```
-
-## Forwarder
-
-| Env | Alamat |
-| --- | ------ |
-| Simulation (`--broadcast` dev) | `0xD41263567DdfeAd91504199b8c6c87371e83ca5d` |
-| Production (deploy workflow nanti) | `0x76c9cf548b4179F8901cda1f8623568b58215E62` |
-
-Chain name: `ethereum-testnet-sepolia-arbitrum-1`

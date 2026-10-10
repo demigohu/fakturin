@@ -8,9 +8,12 @@ const CONTRACTS: [string, string | undefined][] = [
   ["FakturRegistry", addresses.registry],
   ["FakturVaultFactory", addresses.factory],
   ["FakturNFT", addresses.nft],
-  ["MockIDR", addresses.mockIdr],
+  ["MockIDRX", addresses.idrx],
   ["FakturVerifierReceiver", addresses.receiver],
   ["FakturKeeper", addresses.keeper],
+  ["FakturRenderer", addresses.renderer],
+  ["ACE IdentityRegistry", addresses.aceIdentityRegistry],
+  ["ACE CredentialRegistry", addresses.aceCredentialRegistry],
 ];
 
 export function Footer() {
@@ -23,7 +26,7 @@ export function Footer() {
             Built for Ethereum Jakarta Hackathon 2026, RWA track. Running on Arbitrum Sepolia.
           </p>
           <p className={s.footerNote}>
-            &lt;demo&gt; MockIDR is not money. Not a financial product. &lt;/demo&gt;
+            &lt;demo&gt; MockIDRX is a test copy of the IDRX rupiah stablecoin: not money, not affiliated with IDRX. Not a financial product. &lt;/demo&gt;
           </p>
         </div>
         <div className={s.footerCol}>

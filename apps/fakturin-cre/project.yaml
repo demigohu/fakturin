@@ -28,3 +28,12 @@ default: &default
           url: https://sepolia-rollup.arbitrum.io/rpc
 staging-settings: *default
 production-settings: *default
+
+# Local testing against an anvil fork of Arbitrum Sepolia (keeps Chainlink's simulation forwarder):
+#   anvil --fork-url https://sepolia-rollup.arbitrum.io/rpc --chain-id 421614 --block-time 1
+local-settings:
+    cre-cli:
+        don-family: "zone-a"
+    rpcs:
+        - chain-name: ethereum-testnet-sepolia-arbitrum-1
+          url: http://127.0.0.1:8545

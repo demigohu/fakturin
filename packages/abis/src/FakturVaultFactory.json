@@ -58,6 +58,16 @@
             "internalType": "uint256"
           },
           {
+            "name": "fee",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "treasury",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
             "name": "fundingDeadline",
             "type": "uint64",
             "internalType": "uint64"

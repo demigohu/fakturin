@@ -12,9 +12,11 @@ const ITEMS: { name: string; addr?: string; role: string; big?: boolean }[] = [
   { name: "FakturRegistry", addr: addresses.registry, role: "Faktur Pajak IDs, verification, limits, defaults", big: true },
   { name: "FakturVaultFactory", addr: addresses.factory, role: "One ERC-4626 vault per verified invoice", big: true },
   { name: "FakturNFT", addr: addresses.nft, role: "Invoice token, locked inside its vault" },
-  { name: "MockIDR", addr: addresses.mockIdr, role: "Test token, not real rupiah" },
+  { name: "MockIDRX", addr: addresses.idrx, role: "Test token, not real rupiah" },
   { name: "FakturVerifierReceiver", addr: addresses.receiver, role: "Chainlink CRE verification consumer" },
   { name: "FakturKeeper", addr: addresses.keeper, role: "Chainlink CRE cron closes overdue vaults" },
+  { name: "ACE IdentityRegistry", addr: addresses.aceIdentityRegistry, role: "Chainlink ACE: wallet to Cross-Chain ID", big: true },
+  { name: "ACE CredentialRegistry", addr: addresses.aceCredentialRegistry, role: "Chainlink ACE: KYC, KYB and PKP credentials", big: true },
 ];
 
 const COLORS = ["#4da2ff", "#ffd731", "#e9ccff", "#55db9c"];

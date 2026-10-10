@@ -15,3 +15,11 @@ production-settings:
     workflow-path: "./main.ts"
     config-path: "./config.json"
     secrets-path: ""
+
+local-settings:
+  user-workflow:
+    workflow-name: "fakturin-verify"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.local.json"
+    secrets-path: ""

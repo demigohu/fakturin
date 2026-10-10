@@ -11,6 +11,8 @@ export type VaultInfo = {
   target: bigint;
   advance: bigint;
   holdback: bigint;
+  /** Platform fee taken on repayment. Funders share `nominal - fee`. */
+  fee: bigint;
   totalAssets: bigint;
   totalSupply: bigint;
   fundingDeadline: bigint;
@@ -29,12 +31,18 @@ const FIELDS = [
   "target",
   "advance",
   "holdback",
+  "fee",
   "totalAssets",
   "totalSupply",
   "fundingDeadline",
   "dueDate",
   "defaultableAt",
 ] as const;
+
+/** What `amount` lent into a vault pays back when the seller repays (after the platform fee). */
+export function payoutAtRepayment(amount: bigint, v: Pick<VaultInfo, "nominal" | "fee" | "target">): bigint {
+  return v.target > 0n ? (amount * (v.nominal - v.fee)) / v.target : 0n;
+}
 
 /** Reads one FakturVault in a single multicall, plus the connected wallet's position. */
 export function useVault(vault: Address | undefined) {
@@ -54,9 +62,9 @@ export function useVault(vault: Address | undefined) {
   if (!vault || !r) return { vault: undefined, isLoading: q.isLoading };
   const big = (i: number) => (typeof r[i] === "bigint" ? (r[i] as bigint) : 0n);
 
-  const totalAssets = big(5);
-  const totalSupply = big(6);
-  const shares = big(10);
+  const totalAssets = big(6);
+  const totalSupply = big(7);
+  const shares = big(11);
   const info: VaultInfo = {
     address: vault,
     state: Number(r[0] ?? 0),
@@ -64,16 +72,17 @@ export function useVault(vault: Address | undefined) {
     target: big(2),
     advance: big(3),
     holdback: big(4),
+    fee: big(5),
     totalAssets,
     totalSupply,
-    fundingDeadline: big(7),
-    dueDate: big(8),
-    defaultableAt: big(9),
+    fundingDeadline: big(8),
+    dueDate: big(9),
+    defaultableAt: big(10),
     shares,
     // Same rounding as ERC4626 with no decimals offset: shares * (assets + 1) / (supply + 1)
     positionValue: (shares * (totalAssets + 1n)) / (totalSupply + 1n),
-    maxRedeem: big(11),
-    maxDeposit: big(12),
+    maxRedeem: big(12),
+    maxDeposit: big(13),
   };
   return { vault: info, isLoading: q.isLoading };
 }

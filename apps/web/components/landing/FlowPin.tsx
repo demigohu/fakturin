@@ -17,12 +17,12 @@ const STEPS: {
   status?: number;
   reject?: string;
 }[] = [
-  { who: "Seller", tone: "var(--cat-lilac)", text: "Enters a Rp100M Faktur Pajak number and signs once.", img: "penjual", status: 1 },
-  { who: "Chainlink CRE", tone: "var(--accent)", text: "Checks it with PJAP: real, not cancelled, never financed. A Rp97M vault opens.", img: "cek", status: 3 },
+  { who: "Seller", tone: "var(--cat-lilac)", text: "Verified once through Chainlink ACE, enters a Rp100M Faktur Pajak number and signs.", img: "penjual", status: 1 },
+  { who: "Chainlink CRE", tone: "var(--accent)", text: "Checks it with PJAP: real, not cancelled, issued under the seller's own NPWP. A Rp97M vault opens.", img: "cek", status: 3 },
   { who: "Funder A", tone: "var(--cat-green)", text: "Picks the invoice and puts in Rp50M. The vault is half full.", img: "pemberi-dana", status: 3 },
   { who: "Funder B", tone: "var(--cat-green)", text: "Adds the last Rp47M. Rp80M reaches the seller in the same transaction.", img: "pembeli", status: 4 },
   { who: "Another seller", tone: "var(--cat-orange)", text: "Tries to submit the same Faktur Pajak. The registry refuses.", img: "hero", reject: "Already registered" },
-  { who: "Seller", tone: "var(--cat-lilac)", text: "Repays Rp100M after the buyer pays. Funders withdraw about 3.09% more.", img: "mitra", status: 5 },
+  { who: "Seller", tone: "var(--cat-lilac)", text: "Repays Rp100M after the buyer pays. Funders withdraw Rp99.7M for Rp97M lent; Fakturin keeps Rp0.3M.", img: "mitra", status: 5 },
 ];
 
 /** Pinned horizontal walkthrough (gpt-taste horizontal pan, start "top top"). */

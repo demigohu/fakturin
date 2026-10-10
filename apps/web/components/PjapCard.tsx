@@ -1,7 +1,8 @@
 import type { PjapFaktur } from "../lib/pjap";
-import { formatMockIdr } from "../lib/invoice";
+import { formatIdrx } from "../lib/invoice";
 import { KeyValue, SimTag } from "./ui/Panel";
 import { Notice } from "./ui/Notice";
+import { UNIT } from "../lib/token";
 
 const STATUS_TEXT: Record<PjapFaktur["status"], string> = {
   VALID: "Valid",
@@ -11,28 +12,55 @@ const STATUS_TEXT: Record<PjapFaktur["status"], string> = {
 };
 
 function date(iso?: string) {
-  return iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-";
+  return iso
+    ? new Date(iso).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "-";
 }
 
-/** What PJAP (simulated) says about a Faktur Pajak number. */
-export function PjapCard({ faktur }: { faktur: PjapFaktur }) {
+/**
+ * What PJAP (simulated) says about a Faktur Pajak number. `parties` shows only the status and
+ * the names (for screens that already show amounts and dates from the onchain record).
+ */
+export function PjapCard({
+  faktur,
+  parties,
+}: {
+  faktur: PjapFaktur;
+  parties?: boolean;
+}) {
   if (faktur.status !== "VALID") {
     return (
       <Notice tone="error">
-        <SimTag /> PJAP says: {STATUS_TEXT[faktur.status]}. This Faktur Pajak cannot be financed.
+        <SimTag /> PJAP says: {STATUS_TEXT[faktur.status]}. This Faktur Pajak
+        cannot be financed.
       </Notice>
     );
   }
-  return (
-    <KeyValue
-      items={[
-        ["PJAP status", <span key="s"><SimTag /> {STATUS_TEXT[faktur.status]}</span>],
-        ["Buyer", faktur.pembeli?.nama ?? "-"],
-        ["Seller on record", faktur.penjual?.nama ?? "-"],
-        ["Invoice total", <span key="t" className="num">{formatMockIdr(BigInt(faktur.total ?? 0) * 10n ** 18n)}</span>],
-        ["Issued", date(faktur.tanggalFaktur)],
-        ["Due", date(faktur.jatuhTempo)],
-      ]}
-    />
-  );
+  const items: [string, React.ReactNode][] = [
+    [
+      "Tax office (PJAP)",
+      <span key="s">
+        <SimTag /> {STATUS_TEXT[faktur.status]}
+      </span>,
+    ],
+    ["Seller", faktur.penjual?.nama ?? "-"],
+    ["Buyer", faktur.pembeli?.nama ?? "-"],
+  ];
+  if (!parties) {
+    items.push(
+      [
+        "Invoice total",
+        <span key="t" className="num">
+          {formatIdrx(BigInt(faktur.total ?? 0) * UNIT)}
+        </span>,
+      ],
+      ["Issued", date(faktur.tanggalFaktur)],
+      ["Due", date(faktur.jatuhTempo)],
+    );
+  }
+  return <KeyValue items={items} />;
 }

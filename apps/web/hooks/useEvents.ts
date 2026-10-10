@@ -51,3 +51,19 @@ export function useVaults() {
     },
   });
 }
+
+const FUNDED = parseAbiItem("event Funded(uint256 advance, uint256 holdback)");
+
+/** The transaction that filled `vault` and paid the seller their advance (FakturVault.Funded). */
+export function useFundedTx(vault: Address | undefined) {
+  const client = usePublicClient();
+  return useQuery({
+    queryKey: ["funded-tx", vault],
+    enabled: Boolean(client && vault),
+    staleTime: Infinity,
+    queryFn: async () => {
+      const logs = await client!.getLogs({ address: vault, event: FUNDED, fromBlock: FROM_BLOCK });
+      return logs[0]?.transactionHash ?? null;
+    },
+  });
+}

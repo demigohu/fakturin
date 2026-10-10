@@ -9,7 +9,15 @@ setupGsap();
 const ITEMS: [string, string][] = [
   [
     "What is Fakturin?",
-    "A registry and funding layer for Faktur Pajak. A seller enters the tax invoice number, Chainlink CRE checks it with the tax system through PJAP, and a dedicated ERC-4626 vault lets several funders finance it together.",
+    "Invoice financing on Arbitrum. A verified business picks a Faktur Pajak, Chainlink CRE checks it with the tax system through PJAP, and a dedicated ERC-4626 vault lets several verified funders finance it together. The business gets 80% at once and repays when its customer pays; overdue vaults close on their own.",
+  ],
+  [
+    "Who can use it?",
+    "Verified wallets only. Sellers pass KYB once and receive Chainlink ACE credentials (business verified, plus VAT-registered with a hash of their NPWP); funders pass KYC. Credentials live in Chainlink ACE's IdentityRegistry and CredentialRegistry, and only the authorized verification provider can write them. No personal data goes onchain.",
+  ],
+  [
+    "What does it cost, and who earns what?",
+    "The seller pays 1.5% per 30 days of tenor, all-in (within OJK's 0.067% per day cap for productive financing). 90% of that goes to funders, split by how much each lent; 10% is the Fakturin fee, taken only when the invoice is repaid.",
   ],
   [
     "Does the buyer have to do anything?",
@@ -25,11 +33,11 @@ const ITEMS: [string, string][] = [
   ],
   [
     "What happens if the seller does not repay?",
-    "After the due date and a grace period, a Chainlink CRE keeper closes the vault as defaulted on its own. Funders share the 17% held in the vault, and the seller is flagged in the registry and cannot submit again.",
+    "After the due date and a grace period, a Chainlink CRE keeper closes the vault as defaulted on its own. Funders share the part held back in the vault (about 17% on a 60-day invoice), and the seller is flagged in the registry and cannot finance again.",
   ],
   [
     "What is simulated?",
-    "PJAP tax data (real access needs a PJAP partnership), funder KYC, and MockIDR, which is a test token and not money. The CRE workflow is real; until it can run permanently, a demo relayer runs the same check.",
+    "PJAP tax data (real access needs a PJAP partnership), the KYC/KYB verification provider (the Chainlink ACE contracts are real, the provider writing the credentials is a demo), and MockIDRX, a test copy of IDRX (the rupiah stablecoin, 2 decimals) that is not money and not issued by IDRX. In production the vaults would hold IDRX or another rupiah stablecoin once it is on Arbitrum. The CRE workflows are real; until they can run permanently, a demo relayer runs the same checks.",
   ],
 ];
 

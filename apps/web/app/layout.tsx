@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: "%s | Fakturin",
   },
   description:
-    "Invoices confirmed by the buyer become a single token on Arbitrum, funded once and repaid automatically. Demo on Arbitrum Sepolia with MockIDR.",
+    "Invoice financing for Indonesian small businesses: Faktur Pajak checked with the tax office by Chainlink CRE, verified sellers and funders through Chainlink ACE, one ERC-4626 vault per invoice. Demo on Arbitrum Sepolia with MockIDRX, a test copy of the IDRX rupiah stablecoin.",
 };
 
 export const viewport: Viewport = { themeColor: "#f7f7f7", colorScheme: "light" };

@@ -6,12 +6,14 @@ import { Button } from "./ui/Button";
 
 const COPY = {
   default: {
-    closing: "Past due and not repaid. Chainlink CRE is closing this vault automatically; the held amount then becomes withdrawable.",
+    closing: "Past due and not repaid. Closing automatically; the held amount then becomes withdrawable.",
+    cre: "Past due and not repaid. The Chainlink CRE keeper checks every minute and closes it; the held amount then becomes withdrawable. No action needed.",
     manual: "Past due and not repaid. Close the vault to release the held amount to funders.",
     button: "Close as defaulted",
   },
   cancel: {
     closing: "The funding window ended before the target was reached. Closing automatically; every deposit comes back 1:1.",
+    cre: "The funding window ended before the target was reached. The Chainlink CRE keeper checks every minute and closes it; every deposit comes back 1:1. No action needed.",
     manual: "The funding window ended before the target was reached. Close the vault to refund every deposit 1:1.",
     button: "Close and refund",
   },
@@ -25,6 +27,7 @@ export function AutoClose({ kind, onManual, busy }: { kind: keyof typeof COPY; o
   const state = useAutoClose(true);
   const copy = COPY[kind];
   if (state === "closing") return <Muted>{copy.closing}</Muted>;
+  if (state === "cre") return <Muted>{copy.cre}</Muted>;
   return (
     <>
       <Muted>{copy.manual}</Muted>

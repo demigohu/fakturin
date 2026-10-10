@@ -1,0 +1,268 @@
+.dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: var(--border);
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.dialog::backdrop {
+  background: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 34px);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding: 12px 20px;
+  border-bottom: var(--border);
+}
+
+.head h2 {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.x {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+}
+
+.x:hover:not(:disabled) {
+  border-color: var(--outline);
+}
+
+.x:disabled {
+  opacity: 0.4;
+}
+
+.body {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.summary {
+  display: grid;
+  gap: 8px;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.summary strong {
+  font-weight: 600;
+}
+
+.steps {
+  list-style: none;
+  border: var(--border);
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px;
+}
+
+.step + .step {
+  border-top: var(--border);
+}
+
+.step[data-status="done"] {
+  background: color-mix(in srgb, var(--cat-green) 22%, var(--surface-raised));
+}
+
+.step[data-status="wallet"],
+.step[data-status="mining"],
+.step[data-status="working"] {
+  background: color-mix(in srgb, var(--cat-lilac) 35%, var(--surface-raised));
+}
+
+.step[data-status="error"] {
+  background: color-mix(in srgb, var(--cat-orange) 25%, var(--surface-raised));
+}
+
+.num {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: var(--border);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.step[data-status="done"] .num {
+  background: var(--cat-green);
+}
+
+.stepText {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.stepTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0;
+}
+
+.why {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.status {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.status a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.details {
+  font-size: 13px;
+}
+
+.details summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.details dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 14px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.details dt {
+  color: var(--text-muted);
+}
+
+.details dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.details a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.foot {
+  display: grid;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: var(--border);
+}
+
+.note {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}
+
+.raw {
+  font-size: 12px;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.rawNote {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.summary :global(.moneyflow) {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.summary :global(.moneyflow) td {
+  padding: 7px 10px;
+  border-top: 1px solid var(--line);
+}
+
+.summary :global(.moneyflow) td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.summary :global(.moneyflow) tr:nth-child(3) td {
+  font-weight: 600;
+}

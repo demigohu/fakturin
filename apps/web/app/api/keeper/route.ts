@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { CRE_MODE } from "../../../lib/automation";
 import { createPublicClient, createWalletClient, http, parseEventLogs, type Abi, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { arbitrumSepolia } from "viem/chains";
@@ -17,6 +18,9 @@ import keeperAbi from "@repo/abis/FakturKeeper";
 const MAX_PER_CALL = 20n;
 
 export async function POST() {
+  // Chainlink CRE does this job; the relayer stays out of the way.
+  if (CRE_MODE) return NextResponse.json({ mode: "cre" }, { status: 202 });
+
   const key = process.env.VERIFIER_PRIVATE_KEY;
   const keeper = process.env.NEXT_PUBLIC_FAKTUR_KEEPER_ADDRESS as Hex | undefined;
   if (!key || !keeper) {

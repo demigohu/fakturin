@@ -2,8 +2,9 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { CRE_MODE } from "../lib/automation";
 
-export type AutoCloseState = "closing" | "unavailable";
+export type AutoCloseState = "closing" | "cre" | "unavailable";
 
 const RETRY_MS = 10_000;
 
@@ -41,10 +42,15 @@ function requestClose(): Promise<boolean | null> {
  */
 export function useAutoClose(due: boolean): AutoCloseState {
   const queryClient = useQueryClient();
-  const [state, setState] = useState<AutoCloseState>(unavailable ? "unavailable" : "closing");
+  const [state, setState] = useState<AutoCloseState>(CRE_MODE ? "cre" : unavailable ? "unavailable" : "closing");
 
   useEffect(() => {
     if (!due) return;
+    if (CRE_MODE) {
+      // The Chainlink CRE keeper closes it on its own schedule; just keep the screen fresh.
+      const t = setInterval(() => queryClient.invalidateQueries(), RETRY_MS);
+      return () => clearInterval(t);
+    }
     let alive = true;
     const tick = () =>
       requestClose().then((closed) => {

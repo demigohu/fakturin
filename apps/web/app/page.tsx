@@ -14,7 +14,7 @@ import { ROLES } from "../lib/roles";
 
 // Worked example from PRD section 6 (N = Rp100M, d = 3%, r = 80%).
 const MONEY = [
-  { label: "Vault target", value: 97_000_000, img: "token", hl: "var(--hl-lime)", note: "Raised from funders. The Rp3M difference is their return." },
+  { label: "Vault target", value: 97_000_000, img: "token", hl: "var(--hl-lime)", note: "Raised from funders for 60 days. The Rp3M difference is the seller's cost: Rp2.7M to funders, Rp0.3M Fakturin fee." },
   { label: "Paid to seller", value: 80_000_000, img: "formulir", hl: "var(--accent)", note: "Sent in the same transaction that fills the vault." },
   { label: "Held in vault", value: 17_000_000, img: "bantalan", hl: "var(--cat-yellow)", note: "Back to the seller on repayment, kept for funders on default." },
 ];
@@ -26,7 +26,7 @@ const STATS = [
   { value: 49, suffix: "%", label: "of invoices are paid late", tone: "var(--cat-lilac)" },
 ];
 
-const SIMULATED = ["PJAP tax data", "Funder KYC", "Rupiah (MockIDR)", "Always-on CRE (demo relayer)"];
+const SIMULATED = ["PJAP tax data", "KYC / KYB provider", "Rupiah (MockIDRX)", "Always-on CRE (demo relayer)"];
 
 export default function Home() {
   return (
@@ -46,8 +46,9 @@ export default function Home() {
                   Checked first, then funded.
                 </h2>
                 <p data-ghost="dark">
-                  Suppliers wait weeks to get paid. Funders hold back because one invoice can be pitched
-                  to many of them at once. Fakturin settles both problems in the contract.
+                  Small suppliers wait weeks for their customers to pay. Invoice financing pays them now,
+                  but lenders hold back because one invoice can be pitched to many of them at once.
+                  Fakturin settles both problems in the contract.
                 </p>
               </div>
               <ul className={l.steps}>
@@ -92,6 +93,26 @@ export default function Home() {
                     Faktur Pajak was cancelled
                   </span>
                 </div>
+                <div className={l.guard} data-reveal-item>
+                  <h3>Only the invoice&apos;s own seller</h3>
+                  <p>
+                    Businesses verify once and get a Chainlink ACE credential holding a hash of their NPWP. An
+                    invoice issued under another NPWP is refused, so nobody can finance someone else&apos;s sale.
+                  </p>
+                  <span className={l.reject} data-scramble>
+                    NPWP does not match
+                  </span>
+                </div>
+                <div className={l.guard} data-reveal-item>
+                  <h3>We earn only when funders do</h3>
+                  <p>
+                    Sellers pay 1.5% per 30 days, all-in, inside the OJK cap. Fakturin keeps 10% of it, taken
+                    only when the invoice is repaid. On a default the platform earns nothing.
+                  </p>
+                  <span className={l.reject} data-scramble>
+                    No fee on default
+                  </span>
+                </div>
               </div>
             </div>
           </section>
@@ -100,9 +121,12 @@ export default function Home() {
           <section id="roles" className={l.warm} data-theme-section="light">
             <div className={l.wrap}>
               <h2 className={l.h2Display} data-split="words">
-                Two roles. Buyers stay out of it.
+                Borrow or lend. The customer stays out of it.
               </h2>
-              <p className={l.sub}>Sellers and funders each use their own wallet. The buyer just pays the seller as usual.</p>
+              <p className={l.sub}>
+                Businesses borrow against their invoices; funders lend and earn a return. The business&apos;s
+                customer just pays the business as usual and never uses the app.
+              </p>
               <div className={l.roles}>
                 {ROLES.map((r, i) => (
                   <div
@@ -141,8 +165,8 @@ export default function Home() {
           <section id="split" className={l.section} data-theme-section="light">
             <div className={l.wrap}>
               <div className={l.ruleHead}>
-                <h2 className={l.title}>Rp100M, split in the open.</h2>
-                <p className={l.subGrey}>The PRD example: 3% discount, 80% advance.</p>
+                <h2 className={l.title}>A Rp100M invoice, step by step.</h2>
+                <p className={l.subGrey}>Funders lend Rp97M. The business gets Rp80M today; Rp17M is held as a safety buffer.</p>
               </div>
               <div className={l.prizes} data-reveal-row>
                 {MONEY.map((m) => (
@@ -174,7 +198,7 @@ export default function Home() {
 
               <div className={l.ruleHead}>
                 <h2 className={l.title}>At the due date</h2>
-                <p className={l.subGrey}>The seller repays the vault. The contract does the rest.</p>
+                <p className={l.subGrey}>The customer pays the business, the business repays Rp100M. The contract does the rest.</p>
               </div>
               <div className={l.outcomes} data-reveal-row>
                 <div className={l.prize} data-reveal-item>
@@ -190,7 +214,7 @@ export default function Home() {
                   </div>
                   <dl className={l.outcomeRows}>
                     <dt>Funders withdraw</dt>
-                    <dd>Rp100,000,000</dd>
+                    <dd>Rp99,700,000</dd>
                     <dt>Seller gets the held amount back</dt>
                     <dd>Rp17,000,000</dd>
                   </dl>
@@ -234,14 +258,14 @@ export default function Home() {
                 wallet needed.
               </p>
               <div className={l.ctaRow}>
-                <Link href="/cek" className={l.cta} data-magnetic="20">
+                <Link href="/check" className={l.cta} data-magnetic="20">
                   <span className={l.ctaLabel}>Check an invoice</span>
                   <span className={l.ctaIcon}>
                     <MagnifyingGlass size={22} />
                   </span>
                 </Link>
-                <Link href="/pasar" className={l.cta} data-magnetic="20">
-                  <span className={l.ctaLabel}>Open the market</span>
+                <Link href="/lend" className={l.cta} data-magnetic="20">
+                  <span className={l.ctaLabel}>Lend to invoices</span>
                   <span className={l.ctaIcon}>
                     <Storefront size={22} />
                   </span>
@@ -257,7 +281,7 @@ export default function Home() {
                 Open contracts.
               </h2>
               <p className={l.subInk}>
-                Every rule on this page runs in these five contracts. Verify them yourself on Arbiscan.
+                Every rule on this page runs in these contracts, identity included. Verify them yourself on Arbiscan.
               </p>
               <ContractGrid />
               <div className={l.simBar}>
@@ -289,8 +313,8 @@ export default function Home() {
             <h2 className={l.closingTitle} data-split="words">
               Try it yourself in two minutes.
             </h2>
-            <Link href="/penjual" className={l.closingBar}>
-              <span>Submit an invoice</span>
+            <Link href="/borrow" className={l.closingBar}>
+              <span>Borrow against an invoice</span>
               <span className={l.closingIcon}>
                 <ArrowUpRight size={26} />
               </span>

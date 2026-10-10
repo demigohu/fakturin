@@ -5,7 +5,6 @@ import {
   WarningOctagon,
 } from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
-import { EXPLORER, shortHex } from "../../lib/invoice";
 import s from "./ui.module.css";
 
 type Tone = "info" | "success" | "error" | "pending";
@@ -24,39 +23,4 @@ export function Notice({ tone = "info", children }: { tone?: Tone; children: Rea
       <div>{children}</div>
     </div>
   );
-}
-
-/** Standard feedback block for a write: pending, success with explorer link, or decoded error. */
-export function TxFeedback({
-  pending,
-  success,
-  hash,
-  error,
-  message,
-}: {
-  pending: boolean;
-  success: boolean;
-  hash?: `0x${string}`;
-  error: string | null;
-  message?: string;
-}) {
-  const link = hash && (
-    <a href={`${EXPLORER}/tx/${hash}`} target="_blank" rel="noreferrer" className="mono">
-      {shortHex(hash, 8, 6)}
-    </a>
-  );
-  if (error) return <Notice tone="error">{error}</Notice>;
-  if (pending)
-    return (
-      <Notice tone="pending">
-        Waiting for the network{hash ? <>: {link}</> : "…"}
-      </Notice>
-    );
-  if (success && message)
-    return (
-      <Notice tone="success">
-        {message} {link && <>Transaction {link}.</>}
-      </Notice>
-    );
-  return null;
 }

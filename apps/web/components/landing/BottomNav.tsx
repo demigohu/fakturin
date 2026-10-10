@@ -54,8 +54,8 @@ export function BottomNav() {
           {t.label}
         </a>
       ))}
-      <Link href="/penjual" className={l.tabCta}>
-        <span>Submit an invoice</span>
+      <Link href="/borrow" className={l.tabCta}>
+        <span>Borrow</span>
         <span className={l.tabCtaIcon}>
           <ArrowUpRight size={22} />
         </span>

@@ -1,4 +1,5 @@
 import { encodePacked, keccak256 } from "viem";
+import { UNIT } from "./token";
 
 /** Mirrors FakturPajak.normalize: only digits count (formatting and A/C suffixes ignored). */
 export function normalizeFakturNumber(raw: string): string {
@@ -50,14 +51,15 @@ export const STATUS_TONE: Record<number, StatusTone> = {
 };
 
 /** What moves an invoice into each status (PRD v2 section 5). */
+/** What each status means right now, in plain words (shown under the status track). */
 export const STATUS_ACTOR: Record<number, string> = {
-  1: "Seller submits the Faktur Pajak",
-  2: "PJAP check failed",
-  3: "Chainlink CRE verifies with PJAP",
-  4: "Funders fill the vault",
-  5: "Seller repays",
-  6: "Not repaid after due date",
-  7: "Target not reached in time",
+  1: "Chainlink is checking it with the tax office",
+  2: "The tax-office check failed",
+  3: "Verified; funders are filling the vault",
+  4: "Seller paid; waiting for repayment",
+  5: "Seller repaid; funders withdraw",
+  6: "Not repaid; funders share the buffer",
+  7: "Not filled in time; deposits refunded",
 };
 
 /** FakturRegistry.REJECT_* */
@@ -65,9 +67,10 @@ export const REJECT_REASON: Record<number, string> = {
   1: "Faktur Pajak not found",
   2: "Faktur Pajak was cancelled",
   3: "Faktur Pajak was replaced; use the replacement number",
-  4: "Seller does not match the Faktur Pajak",
+  4: "This Faktur Pajak was issued under another business's NPWP, not the one your wallet verified",
   5: "Due date has already passed",
   6: "Over the seller or buyer limit",
+  7: "Due date is too far away (more than 180 days)",
 };
 
 /** FakturVault.State */
@@ -76,7 +79,7 @@ export const VAULT_STATE = { Funding: 0, Active: 1, Repaid: 2, Defaulted: 3, Can
 const NUM = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 
 export function formatIdrShort(amount: bigint): string {
-  const whole = Number(amount / 10n ** 18n);
+  const whole = Number(amount / UNIT);
   if (whole >= 1_000_000_000) return `Rp${NUM.format(whole / 1_000_000_000)}B`;
   if (whole >= 1_000_000) return `Rp${NUM.format(whole / 1_000_000)}M`;
   return `Rp${NUM.format(whole)}`;
@@ -95,22 +98,24 @@ export function shortHex(hex: string, head = 6, tail = 4): string {
 
 export const EXPLORER = "https://sepolia.arbiscan.io";
 
-/** MockIDR uses 18 decimals; UI shows whole rupiah-style units. */
-export function formatMockIdr(amount: bigint): string {
-  const whole = amount / 10n ** 18n;
+/** Token units -> "Rp1,234,567" (whole rupiah; MockIDRX has 2 decimals, so cents are dropped). */
+export function formatIdrx(amount: bigint): string {
+  const whole = amount / UNIT;
   return `Rp${whole.toLocaleString("en-US")}`;
 }
 
-export function parseMockIdr(input: string): bigint {
+/** "Rp1.234.567" typed by a user -> token units. */
+export function parseIdrx(input: string): bigint {
   const digits = input.replace(/[^\d]/g, "");
   if (!digits) return 0n;
-  return BigInt(digits) * 10n ** 18n;
+  return BigInt(digits) * UNIT;
 }
 
 export function decodeContractError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
   if (msg.includes("AlreadyRegistered")) return "This Faktur Pajak is already registered or financed";
   if (msg.includes("SellerIsDefaulted")) return "This seller defaulted before and cannot submit";
+  if (msg.includes("SellerNotVerified")) return "Verify your business first (KYB), then submit";
   if (msg.includes("EmptyFakturNumber")) return "Enter a Faktur Pajak number";
   if (msg.includes("ERC4626ExceededMaxDeposit")) {
     return "Deposit not allowed: register as a funder, or the amount is above what the vault still needs";
@@ -123,9 +128,8 @@ export function decodeContractError(err: unknown): string {
   if (msg.includes("NotActive")) return "The vault is not active";
   if (msg.includes("NotFunding")) return "The vault is no longer funding";
   if (msg.includes("SharesNotTransferable")) return "Vault shares cannot be transferred";
-  if (msg.includes("KycClosed")) return "Funder registration is closed";
-  if (msg.includes("ERC20InsufficientBalance")) return "Not enough MockIDR";
-  if (msg.includes("ERC20InsufficientAllowance")) return "MockIDR approval is too low";
-  if (msg.includes("User rejected") || msg.includes("User denied")) return "Transaction rejected in the wallet";
+  if (msg.includes("ERC20InsufficientBalance")) return "Not enough MockIDRX";
+  if (msg.includes("ERC20InsufficientAllowance")) return "MockIDRX approval is too low";
+  if (msg.includes("User rejected") || msg.includes("User denied")) return "Rejected in the wallet";
   return msg.slice(0, 200);
 }

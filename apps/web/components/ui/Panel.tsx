@@ -71,6 +71,20 @@ export function KeyValue({ items }: { items: [string, ReactNode][] }) {
   );
 }
 
+/** Compact row of headline numbers: label above, value below, wrapping on narrow screens. */
+export function Facts({ items }: { items: [string, ReactNode][] }) {
+  return (
+    <dl className={s.facts}>
+      {items.map(([k, v]) => (
+        <div key={k}>
+          <dt>{k}</dt>
+          <dd>{v}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export function Skeleton({ width = "100%", height = "1em" }: { width?: string; height?: string }) {
   return <span className={s.skeleton} style={{ width, height }} aria-hidden />;
 }

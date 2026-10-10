@@ -3,3 +3,7 @@
 .env.*
 !.env.example
 *.env
+
+# Local anvil-fork configs (addresses differ per local deploy)
+config.local.json
+binary.wasm

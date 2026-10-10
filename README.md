@@ -1,25 +1,32 @@
 # Fakturin
 
-Pembiayaan faktur terkonfirmasi di **Arbitrum Sepolia** (ETH Jakarta 2026 — RWA). Monorepo Turborepo: kontrak Foundry + frontend Next.js.
+Pembiayaan Faktur Pajak terverifikasi di **Arbitrum Sepolia** (ETH Jakarta 2026, RWA). UMKM (PKP) mengajukan
+nomor Faktur Pajak, Chainlink CRE memverifikasinya ke PJAP, lalu satu vault ERC-4626 terbuka untuk faktur itu.
+Banyak pemberi dana patungan (all-or-nothing); begitu penuh, penjual langsung menerima 80%. Pembeli tidak memakai
+app (silent factoring, recourse ke penjual). Monorepo Turborepo: kontrak Foundry, workflow CRE, frontend Next.js.
 
 ## Yang nyata vs simulasi
 
-| Nyata (onchain) | Simulasi (UI / peran admin) |
-| ---------------- | --------------------------- |
-| Registry ID faktur & status | Rekening penampung rupiah |
-| Konfirmasi pembeli (attestation) | Cek e-Faktur / QR DJP |
-| ERC-721 token faktur | — |
-| Pasar & anti pembiayaan ganda | Whitelist lender = admin demo |
-| Pelunasan / gagal bayar (MockIDR) | Mitra = tombol oracle |
+| Nyata (onchain) | Simulasi |
+| --- | --- |
+| Registry Faktur Pajak, anti pembiayaan ganda, limit | Data PJAP / DJP (`/api/pjap`) |
+| Vault ERC-4626 per faktur, repay, default, withdraw | Penyedia KYC/KYB yang menerbitkan kredensial |
+| Identitas Chainlink ACE (CCID, kredensial KYC/KYB/PKP), pencocokan NPWP penjual | Akun pajak (NPWP, PKP) per wallet |
+| Harga per tenor (1,5%/30 hari), fee platform 10% saat lunas, NFT dengan SVG on-chain | |
+| Verifikasi via Chainlink CRE (`FakturVerifierReceiver`) | MockIDRX, bukan rupiah |
+| Tutup otomatis vault lewat waktu (`FakturKeeper`) | Relayer demo menggantikan CRE yang belum di-deploy permanen |
 
-**MockIDR bukan uang nyata.**
+**MockIDRX bukan uang nyata.** Ini tiruan testnet dari IDRX (stablecoin rupiah, 1 token = Rp1, 2 desimal), bukan diterbitkan oleh IDRX.
 
 ## Struktur
 
-- `apps/contracts-solidity` — Solidity 0.8 + Foundry + OpenZeppelin
-- `apps/web` — Next.js + viem + wagmi
-- `packages/abis` — ABI hasil `forge inspect`
-- `docs/PRD.md`, `docs/Spec&Pitch.md`
+- `apps/contracts-solidity` — Solidity 0.8.28 + Foundry + OpenZeppelin
+- `apps/fakturin-cre/verify` — workflow CRE: `VerificationRequested` → PJAP → `fulfillVerification`
+- `apps/fakturin-cre/keeper` — workflow CRE cron: tutup vault yang lewat deadline / jatuh tempo
+- `apps/web` — Next.js + wagmi + viem + Reown AppKit
+- `packages/abis` — ABI kontrak
+- `apps/contracts-solidity/lib/chainlink-ace` — kontrak inti Chainlink ACE (open-source, BUSL-1.1, non-produksi)
+- `docs/PRD.md` — spesifikasi, `docs/TESTING.md` — panduan testing end-to-end
 
 ## Development
 
@@ -29,32 +36,25 @@ npm install
 # Tes kontrak
 cd apps/contracts-solidity && forge test
 
-# Frontend (set .env.local dulu)
+# Frontend (isi apps/web/.env dulu: cp apps/web/.env.example apps/web/.env)
 npm run dev -- --filter=web
 ```
 
 ## Deploy Arbitrum Sepolia
 
-1. Isi `PRIVATE_KEY` dan RPC di environment (lihat `.env.example`).
-2. `forge script script/Deploy.s.sol:Deploy --rpc-url $ARBITRUM_SEPOLIA_RPC_URL --broadcast`
-3. Verifikasi kontrak di [Arbiscan Sepolia](https://sepolia.arbiscan.io/) bila perlu.
-4. Salin alamat ke `apps/web/.env.local`:
-   - `NEXT_PUBLIC_MOCK_IDR_ADDRESS`
-   - `NEXT_PUBLIC_INVOICE_REGISTRY_ADDRESS`
-   - `NEXT_PUBLIC_INVOICE_MARKETPLACE_ADDRESS`
-   - `NEXT_PUBLIC_INVOICE_NFT_ADDRESS`
+```bash
+cd apps/contracts-solidity
+cp .env.example .env   # PRIVATE_KEY, ARBITRUM_SEPOLIA_RPC_URL, ARBISCAN_API_KEY
+./scripts/deploy-and-verify.sh
+```
 
-Setelah deploy, deployer otomatis di-whitelist sebagai lender dan oracle demo. Tambah lender: `InvoiceMarketplace.setLender`.
+Salin alamat dari log ke `apps/web/.env` dan ke `apps/fakturin-cre/verify/config.json` /
+`apps/fakturin-cre/keeper/config.json`. Detail: `apps/contracts-solidity/README.md`.
 
-## Chainlink CRE (opsional, setelah simulasi)
+## Parameter demo (admin, `FakturRegistry.setParameters`)
 
-Demo hackathon **tidak bergantung** pada CRE deployed. Oracle pelunasan = `/mitra` + `ORACLE_ROLE`.  
-Rencana: `cre workflow simulate --broadcast` di Arbitrum Sepolia dulu; `cre workflow deploy` hanya setelah deploy access.  
-Detail: [docs/chainlink-cre.md](docs/chainlink-cre.md).
-
-## Parameter demo (konfigurasi admin)
-
-- Diskon 3% — harga token = 97% nominal
-- Pencairan ke penjual 80% nominal saat beli
-- Masa sanggah 60 detik
-- Limit penjual 200 juta MockIDR, pembeli 500 juta (outstanding belum lunas)
+- Biaya penjual 1,5% per 30 hari tenor (all-in): target vault = nominal − biaya; fee Fakturin 10% dari biaya, saat lunas
+- Tenor maksimum 180 hari
+- Pencairan ke penjual 80% nominal saat vault penuh; sisanya ditahan sampai repay
+- Jendela pendanaan 3 hari, masa tenggang setelah jatuh tempo 60 detik
+- Limit outstanding penjual Rp200 juta, pembeli Rp500 juta

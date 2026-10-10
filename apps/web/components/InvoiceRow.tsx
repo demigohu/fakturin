@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useInvoice, type Invoice } from "../hooks/useInvoice";
-import { formatDate, formatMockIdr } from "../lib/invoice";
+import { formatDate, formatIdrx } from "../lib/invoice";
 import { Address } from "./ui/Address";
 import { Skeleton } from "./ui/Panel";
 import { StatusBadge } from "./ui/Status";
@@ -41,7 +41,7 @@ export function InvoiceRow({
         <dl className={s.facts}>
           <div>
             <dt>Amount</dt>
-            <dd className="num">{formatMockIdr(invoice.nominal)}</dd>
+            <dd className="num">{formatIdrx(invoice.nominal)}</dd>
           </div>
           <div>
             <dt>Due date</dt>

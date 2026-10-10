@@ -1,0 +1,62 @@
+.steps {
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.num {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: var(--border);
+  background: var(--surface-warm);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.head {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.body {
+  margin-top: 3px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.glossary {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 14px;
+}
+
+.glossary summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  font-weight: 500;
+}
+
+.glossary dl {
+  display: grid;
+  gap: 10px;
+  padding: 2px 12px 12px;
+}
+
+.glossary dt {
+  font-weight: 500;
+}
+
+.glossary dd {
+  color: var(--text-muted);
+  line-height: 1.4;
+}

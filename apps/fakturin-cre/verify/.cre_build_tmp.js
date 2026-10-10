@@ -22120,10 +22120,11 @@ var EVENT_ABI = parseAbi([
 var EVENT_TOPIC = toEventSelector(EVENT_ABI[0]);
 var REJECT = { NOT_FOUND: 1, CANCELLED: 2, REPLACED: 3 };
 var ZERO32 = `0x${"0".repeat(64)}`;
+var TOKEN_UNIT = 100n;
 var fetchVerification = (requester, url) => {
   const response = requester.sendRequest({ method: "GET", url }).result();
   if (response.statusCode === 404) {
-    return { valid: false, rejectCode: REJECT.NOT_FOUND, buyerNpwpHash: ZERO32, nominal: "0", issuedAt: "0", dueDate: "0" };
+    return { valid: false, rejectCode: REJECT.NOT_FOUND, sellerNpwpHash: ZERO32, buyerNpwpHash: ZERO32, nominal: "0", issuedAt: "0", dueDate: "0" };
   }
   if (response.statusCode !== 200) {
     throw new Error(`PJAP request failed with status ${response.statusCode}`);
@@ -22131,13 +22132,14 @@ var fetchVerification = (requester, url) => {
   const f = JSON.parse(Buffer.from(response.body).toString("utf-8"));
   if (f.status !== "VALID") {
     const rejectCode = f.status === "DIBATALKAN" ? REJECT.CANCELLED : f.status === "DIGANTI" ? REJECT.REPLACED : REJECT.NOT_FOUND;
-    return { valid: false, rejectCode, buyerNpwpHash: ZERO32, nominal: "0", issuedAt: "0", dueDate: "0" };
+    return { valid: false, rejectCode, sellerNpwpHash: ZERO32, buyerNpwpHash: ZERO32, nominal: "0", issuedAt: "0", dueDate: "0" };
   }
   return {
     valid: true,
     rejectCode: 0,
+    sellerNpwpHash: keccak256(toBytes(f.penjual.npwp)),
     buyerNpwpHash: keccak256(toBytes(f.pembeli.npwp)),
-    nominal: (BigInt(f.total) * 10n ** 18n).toString(),
+    nominal: (BigInt(f.total) * TOKEN_UNIT).toString(),
     issuedAt: String(Math.floor(new Date(f.tanggalFaktur).getTime() / 1000)),
     dueDate: String(Math.floor(new Date(f.jatuhTempo).getTime() / 1000))
   };
@@ -22162,6 +22164,7 @@ var onVerificationRequested = (runtime, log) => {
       components: [
         { type: "bool", name: "valid" },
         { type: "uint8", name: "rejectCode" },
+        { type: "bytes32", name: "sellerNpwpHash" },
         { type: "bytes32", name: "buyerNpwpHash" },
         { type: "uint256", name: "nominal" },
         { type: "uint64", name: "issuedAt" },
@@ -22173,6 +22176,7 @@ var onVerificationRequested = (runtime, log) => {
     {
       valid: v.valid,
       rejectCode: v.rejectCode,
+      sellerNpwpHash: v.sellerNpwpHash,
       buyerNpwpHash: v.buyerNpwpHash,
       nominal: BigInt(v.nominal),
       issuedAt: BigInt(v.issuedAt),

@@ -1,6 +1,6 @@
 {
-  "registryAddress": "0xD5DcEcC384979bE8CeBea0e71EF1F614c625958E",
-  "receiverAddress": "0xe9f1245f351a9A22Fe66Af462BD663a586df0DDD",
+  "registryAddress": "0xB0f57cbe61bB207Bcd9778f241280c28A74f2030",
+  "receiverAddress": "0xDaE568EA803859DE11fe43a385a219174A7f7975",
   "pjapBaseUrl": "http://localhost:3000/api/pjap/faktur",
   "chainName": "ethereum-testnet-sepolia-arbitrum-1",
   "gasLimit": "3000000"
